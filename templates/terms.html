@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terms of Use · Zanevo</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #06090f; --surface: #0d1525; --surface2: #111f34;
+    --border: #1e2e48; --border2: #273d5e;
+    --text: #f0f4ff; --body: #9baabf; --muted: #9baabf;
+    --label: #6a7fa0; --subtle: #3a4a6b;
+    --blue: #4f8ef7;
+    --max-w: 1440px; --pad: clamp(1.5rem, 4vw, 4rem); --prose-w: 720px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Space Grotesk', sans-serif; font-weight: 400;
+    min-height: 100vh; display: flex; flex-direction: column;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: radial-gradient(circle, rgba(30,50,90,0.45) 1px, transparent 1px);
+    background-size: 32px 32px; pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: ''; position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 90% 50% at 50% -10%, rgba(79,142,247,0.09) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 90% 80%,  rgba(155,110,245,0.06) 0%, transparent 55%);
+    pointer-events: none; z-index: 0;
+  }
+  * { position: relative; z-index: 1; }
+  nav {
+    width: 100%; border-bottom: 1px solid var(--border);
+    background: rgba(6,9,15,0.92); backdrop-filter: blur(18px);
+    position: sticky; top: 0; z-index: 200;
+  }
+  .nav-inner {
+    max-width: var(--max-w); margin: 0 auto; padding: 0 var(--pad);
+    height: 62px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo {
+    font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800;
+    font-size: 1.05rem; color: var(--text); text-decoration: none; letter-spacing: -0.01em;
+  }
+  .logo em { font-style: normal; color: var(--blue); }
+  .nav-links { display: flex; align-items: center; gap: 10px; }
+  .nav-link {
+    font-size: 0.82rem; font-weight: 500; color: var(--muted); text-decoration: none;
+    padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border);
+    display: flex; align-items: center; gap: 7px;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+  }
+  .nav-link:hover { color: var(--text); background: var(--surface); border-color: var(--border2); }
+  .nav-link svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  main { flex: 1; }
+  .prose-wrap {
+    max-width: var(--prose-w); margin: 0 auto; padding: 3rem 2rem 5rem;
+  }
+  .legal-eyebrow {
+    font-size: 0.66rem; font-weight: 600; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--subtle); margin-bottom: 12px;
+  }
+  .prose-wrap h1 {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800; font-size: 2rem; letter-spacing: -0.025em;
+    color: var(--text); margin-bottom: 6px; line-height: 1.15;
+  }
+  .last-updated { font-size: 0.78rem; color: var(--subtle); margin-bottom: 36px; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+  .prose-wrap h2 {
+    font-family: 'Space Grotesk', sans-serif; font-weight: 600;
+    font-size: 0.95rem; color: var(--text); margin-bottom: 8px; margin-top: 0;
+  }
+  .prose-wrap p {
+    font-size: 0.88rem; font-weight: 400; color: var(--body);
+    line-height: 1.8; margin-bottom: 28px;
+  }
+  footer {
+    border-top: 1px solid var(--border); padding: 36px 0;
+  }
+  .footer-inner {
+    max-width: var(--max-w); margin: 0 auto; padding: 0 var(--pad);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .footer-brand-name {
+    font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800;
+    font-size: 1rem; color: var(--text); text-decoration: none; letter-spacing: -0.01em;
+  }
+  .footer-copy { font-size: 0.73rem; font-weight: 400; color: var(--label); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="logo">Zanevo<em>.</em></a>
+    <div class="nav-links">
+      <a href="/#models" class="nav-link">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Models
+      </a>
+      <a href="/#methodology" class="nav-link">
+        <svg viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/></svg>
+        Methodology
+      </a>
+      <a href="/" class="nav-link">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home
+      </a>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <div class="prose-wrap">
+    <div class="legal-eyebrow">Legal</div>
+    <h1>Terms of Use</h1>
+    <p class="last-updated">Last updated: May 2026</p>
+
+    <hr>
+
+    <h2>1. Purpose</h2>
+    <p>This site is a personal ML portfolio project. All models are trained on public datasets and deployed for demonstration only. Predictions generated by this portal should not be used as the basis for real medical, financial, HR, or legal decisions.</p>
+
+    <h2>2. No guarantees</h2>
+    <p>Predictions are generated by statistical models and are not guaranteed to be accurate. Model outputs reflect patterns in training data and may not generalise to all real-world cases. Results may be wrong. Use them accordingly.</p>
+
+    <h2>3. Intellectual property</h2>
+    <p>All models, source code, and content on this site belong to Muhammad Ammar Masroor. You may not reproduce, redistribute, or repurpose any part of this site or its models without explicit written permission.</p>
+
+    <h2>4. Changes</h2>
+    <p>These terms may be updated at any time without prior notice. Continued use of the site following any update constitutes acceptance of the current terms.</p>
+
+    <hr>
+  </div>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <a href="/" class="footer-brand-name">Predictive Intelligence Portal</a>
+    <span class="footer-copy">© 2026 · Muhammad Ammar Masroor</span>
+  </div>
+</footer>
+
+</body>
+</html>

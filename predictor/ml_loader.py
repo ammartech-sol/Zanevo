@@ -1,0 +1,82 @@
+import joblib
+import json
+from pathlib import Path
+
+BASE = Path(__file__).resolve().parent.parent / 'ml_models'
+
+try:
+    heart = {
+        'model':   joblib.load(BASE / 'heart_model.pkl'),
+        'scaler':  joblib.load(BASE / 'heart_scaler.pkl'),
+        'columns': joblib.load(BASE / 'heart_columns.pkl'),
+    }
+    print("Heart model loaded OK")
+except Exception as e:
+    print(f"Heart model FAILED: {e}")
+
+try:
+    churn = {
+        'model':     joblib.load(BASE / 'churn_model.pkl'),
+        'encoder':   joblib.load(BASE / 'churn_encoder.pkl'),
+        'columns':   joblib.load(BASE / 'churn_columns.pkl'),
+        'threshold': joblib.load(BASE / 'churn_threshold.pkl'),
+    }
+    print("Churn model loaded OK")
+except Exception as e:
+    print(f"Churn model FAILED: {e}")
+
+try:
+    attrition = {
+        'model':     joblib.load(BASE / 'xgboost_ibm_attrition.pkl'),
+        'encoder':   joblib.load(BASE / 'attrition_ohe_encoder.pkl'),
+        'columns':   joblib.load(BASE / 'attrition_columns.pkl'),
+        'threshold': joblib.load(BASE / 'attrition_threshold.pkl'),
+    }
+    print("Attrition model loaded OK")
+except Exception as e:
+    print(f"Attrition model FAILED: {e}")
+
+try:
+    census = {
+        'model':     joblib.load(BASE / 'xgboost_adult_census.pkl'),
+        'encoder':   joblib.load(BASE / 'adult_census_encoder.pkl'),
+        'columns':   joblib.load(BASE / 'adult_census_columns.pkl'),
+        'threshold': joblib.load(BASE / 'adult_census_threshold.pkl'),
+    }
+    print("Adult_census model loaded OK")
+except Exception as e:
+    print(f"Adult_census model FAILED: {e}")
+
+try:
+    ames = {
+        'model':     joblib.load(BASE / 'ridge_ames.pkl'),
+        'preprocessor':   joblib.load(BASE / 'ames_preprocessor.pkl'),
+        'columns':   joblib.load(BASE / 'ames_columns.pkl'),
+    }
+    print("Ames_housing model loaded OK")
+except Exception as e:
+    print(f"Ames_housing model FAILED: {e}")
+
+try:
+    student = {
+        'model':     joblib.load(BASE / 'student_performance_model.pkl'),
+        'columns':   joblib.load(BASE / 'student_columns.pkl'),
+    }
+    print("Student_Prediction model loaded OK")
+except Exception as e:
+    print(f"Student_Prediction model FAILED: {e}")
+
+
+try:
+    with open(BASE / 'commerce_cluster_labels.json', 'r') as f:
+        _cluster_labels = json.load(f)
+
+    segmentation = {
+        'model':  joblib.load(BASE / 'commerce_kmeans_model.pkl'),
+        'scaler': joblib.load(BASE / 'commerce_scaler.pkl'),
+        'labels': _cluster_labels,
+    }
+    print("Segmentation model loaded OK")
+except Exception as e:
+    print(f"Segmentation model FAILED: {e}")
+    

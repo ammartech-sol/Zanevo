@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='82' x='50' text-anchor='middle' font-size='82' font-weight='900' fill='%236c63ff' font-family='Arial,sans-serif'>Z</text></svg>">
+<title>zanevo</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #06090f;
+    --surface: #0d1525;
+    --surface2:#111f34;
+    --border:  #1e2e48;
+    --border2: #273d5e;
+    --text:    #f0f4ff;       /* brightened — was #edf1fb */
+    --body:    #9baabf;       /* body copy — was too dark #5f6f8f */
+    --label:   #6a7fa0;       /* section labels — was #2e3d5c (unreadable) */
+    --orange:  #f0623a;
+    --blue:    #4f8ef7;
+    --purple:  #9b6ef5;
+    --green:   #10b981;
+    --amber:   #f59e0b;
+    --teal:    #06b6d4;
+    --max-w:   1440px;
+    --pad:     clamp(1.5rem, 4vw, 4rem);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 400;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    /* full bleed — no artificial side constraint on body */
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: radial-gradient(circle, rgba(30,50,90,0.45) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 90% 50% at 50% -10%, rgba(79,142,247,0.09) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 90% 80%,  rgba(155,110,245,0.06) 0%, transparent 55%);
+    pointer-events: none; z-index: 0;
+  }
+  * { position: relative; z-index: 1; }
+
+  /* ─── LAYOUT SHELL: full-bleed sections, content max-width inside ─── */
+  .inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 var(--pad);
+    width: 100%;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: sticky; top: 0; z-index: 200;
+    background: rgba(6,9,15,0.92);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 62px;
+  }
+  .logo {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800; font-size: 1.05rem;
+    color: var(--text); text-decoration: none; letter-spacing: -0.01em;
+  }
+  .logo em { font-style: normal; color: var(--blue); }
+  .nav-links { display: flex; align-items: center; gap: 10px; }
+  .nav-link {
+    font-size: 0.82rem; font-weight: 500; color: var(--body);
+    text-decoration: none; padding: 6px 14px; border-radius: 6px;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; gap: 7px;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+  }
+  .nav-link:hover { color: var(--text); background: var(--surface); border-color: var(--border2); }
+  .nav-link svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+  .nav-link.gh {
+    border: 1px solid var(--border); margin-left: 0;
+    display: flex; align-items: center; gap: 7px; color: var(--body);
+  }
+  .nav-link.gh:hover { color: var(--text); border-color: var(--border2); }
+  .nav-link.gh svg { width: 14px; height: 14px; fill: currentColor; stroke: none; flex-shrink: 0; }
+
+  main { flex: 1; }
+
+  /* ─── HERO ─── */
+  .hero-section {
+    border-bottom: 1px solid var(--border);
+    padding: 56px 0 50px;
+  }
+  .hero-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 3rem;
+  }
+  .hero-left {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column; gap: 1.25rem;
+  }
+  .eyebrow {
+    align-self: flex-start;
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 5px 14px 5px 10px;
+    border-radius: 100px;
+    border: 1px solid rgba(79,142,247,0.28);
+    background: rgba(79,142,247,0.07);
+  }
+  .eyebrow-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--blue);
+    box-shadow: 0 0 8px rgba(79,142,247,0.9);
+    flex-shrink: 0;
+    animation: pdot 2.4s ease-in-out infinite;
+  }
+  @keyframes pdot {
+    0%,100% { box-shadow: 0 0 6px rgba(79,142,247,0.9); }
+    50%      { box-shadow: 0 0 14px rgba(79,142,247,1), 0 0 28px rgba(79,142,247,0.4); }
+  }
+  .eyebrow span {
+    font-size: 0.69rem; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--blue);
+  }
+  .hero-h1 {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2rem, 3.4vw, 3.3rem);
+    line-height: 1.04; letter-spacing: -0.035em;
+    color: var(--text); white-space: nowrap;
+  }
+  .hero-tagline {
+    font-size: 1.15rem;
+    color: #7eb8f7;
+    margin-top: 0.4rem;
+    margin-bottom: 0.6rem;
+    letter-spacing: 0.04em;
+    font-weight: 400;
+  }
+
+  .hero-h1 .accent {
+    background: linear-gradient(130deg, #4f8ef7 0%, #9b6ef5 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-desc {
+    font-size: 0.96rem; font-weight: 400;
+    color: var(--body); line-height: 1.8; max-width: 500px;
+  }
+  /* 3-step strip inside hero */
+  .steps-row {
+    display: flex; align-items: center; gap: 0; flex-wrap: wrap;
+  }
+  .step-item {
+    display: flex; align-items: center; gap: 10px;
+    padding-right: 22px; margin-right: 22px;
+    border-right: 1px solid var(--border);
+  }
+  .step-item:last-child { border-right: none; padding-right: 0; margin-right: 0; }
+  .step-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--surface); border: 1px solid var(--border2);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .step-icon svg { width: 14px; height: 14px; color: var(--blue); stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .step-label-num {
+    display: block; font-size: 0.6rem; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--label);
+    margin-bottom: 1px;
+  }
+  .step-label-text {
+    display: block; font-size: 0.84rem; font-weight: 600; color: var(--text);
+  }
+
+  /* ─── HERO RIGHT: completely redesigned stat cluster ─── */
+  .hero-right {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 260px;
+  }
+  /* Main stat card — big number with glowing ring */
+  .stat-main {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 14px 22px 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-main::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(79,142,247,0.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .stat-main-label {
+    font-size: 0.65rem; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--label); margin-bottom: 8px;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .stat-main-label::before {
+    content: '';
+    display: inline-block; width: 16px; height: 1px; background: var(--border2);
+  }
+  .stat-main-num {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800; font-size: 3.8rem;
+    line-height: 1; letter-spacing: -0.05em;
+    color: var(--text);
+    text-shadow: 0 0 40px rgba(79,142,247,0.4);
+    margin-bottom: 4px;
+  }
+  .stat-main-sub {
+    font-size: 0.78rem; font-weight: 400; color: var(--body); line-height: 1.4;
+  }
+  /* Row of mini stats */
+  .stat-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .stat-mini {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .stat-mini.c-blue-box  { border-color: rgba(79,142,247,0.3);  background: rgba(79,142,247,0.05); }
+  .stat-mini.c-green-box { border-color: rgba(16,185,129,0.3);  background: rgba(16,185,129,0.05); }
+  .stat-mini.c-purple-box{ border-color: rgba(155,110,245,0.3); background: rgba(155,110,245,0.05); }
+  .stat-mini.full-width {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+  }
+  .stat-mini-val {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800; font-size: 1.3rem; line-height: 1;
+    letter-spacing: -0.03em; color: var(--text);
+  }
+  .stat-mini-val.c-green  { color: var(--green); }
+  .stat-mini-val.c-amber  { color: var(--amber); }
+  .stat-mini-val.c-blue   { color: var(--blue); }
+  .stat-mini-val.c-purple { color: var(--purple); }
+  .stat-mini-val.c-teal   { color: var(--teal); }
+  .stat-mini-lbl {
+    font-size: 0.66rem; font-weight: 500; color: var(--label);
+    line-height: 1.35;
+  }
+  /* live badge */
+  .live-badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 14px;
+    border-radius: 10px;
+    background: rgba(74,222,128,0.07);
+    border: 1px solid rgba(74,222,128,0.2);
+    font-size: 0.75rem; font-weight: 600; color: #4ade80;
+  }
+  .live-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 6px rgba(74,222,128,0.8);
+    animation: blink 2s infinite; flex-shrink: 0;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  /* ─── MODEL GRID ─── */
+  .models-section { padding: 48px 0 60px; }
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .section-lbl {
+    font-size: 0.67rem; font-weight: 600;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--label);
+  }
+  .live-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.71rem; font-weight: 600; color: #4ade80;
+    background: rgba(74,222,128,0.07);
+    border: 1px solid rgba(74,222,128,0.2);
+    padding: 4px 12px; border-radius: 100px;
+  }
+  .live-chip span {
+    width: 5px; height: 5px; background: #4ade80; border-radius: 50%;
+    animation: blink 2s infinite; flex-shrink: 0;
+  }
+
+  /* original large card grid — 3 cols, no auto-fit that shrinks them */
+  .model-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .model-card {
+    --c: var(--blue);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    text-decoration: none; color: var(--text);
+    display: flex; flex-direction: column;
+    transition: border-color 0.22s, transform 0.2s, box-shadow 0.22s;
+  }
+  .model-card:hover {
+    border-color: var(--c);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 44px rgba(0,0,0,0.35),
+                0 0 0 1px var(--c),
+                0 8px 32px color-mix(in srgb, var(--c) 14%, transparent);
+  }
+  .model-card.c-orange { --c: var(--orange); }
+  .model-card.c-blue   { --c: var(--blue);   }
+  .model-card.c-purple { --c: var(--purple);  }
+  .model-card.c-green  { --c: var(--green);   }
+  .model-card.c-amber  { --c: var(--amber);   }
+  .model-card.c-teal   { --c: var(--teal);    }
+  .model-card.c-violet { --c: #d946ef;        }
+
+  .card-top {
+    display: flex; align-items: flex-start;
+    justify-content: space-between; gap: 12px; margin-bottom: 20px;
+  }
+  .card-icon {
+    width: 42px; height: 42px; border-radius: 11px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: color-mix(in srgb, var(--c) 13%, transparent);
+    border: 1px solid color-mix(in srgb, var(--c) 22%, transparent);
+  }
+  .card-icon svg { width: 18px; height: 18px; color: var(--c); }
+  .card-metric {
+    padding: 4px 10px; border-radius: 7px;
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.02em;
+    background: color-mix(in srgb, var(--c) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--c) 24%, transparent);
+    color: var(--c); white-space: nowrap; align-self: flex-start;
+  }
+  .card-algo {
+    font-size: 0.63rem; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--label); margin-bottom: 7px;
+  }
+  .card-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800; font-size: 1.15rem;
+    line-height: 1.2; letter-spacing: -0.015em;
+    color: var(--text); margin-bottom: 12px;
+  }
+  .card-desc {
+    font-size: 0.83rem; font-weight: 400;
+    color: var(--body); line-height: 1.7;
+    flex: 1; margin-bottom: 24px;
+    /* remove clamp — show full description as before */
+  }
+  .card-cta {
+    font-size: 0.8rem; font-weight: 600; color: var(--c);
+    display: inline-flex; align-items: center; gap: 5px;
+    transition: gap 0.18s;
+  }
+  .model-card:hover .card-cta { gap: 9px; }
+  .card-cta::after { content: '→'; }
+
+  /* ─── METHODOLOGY ─── */
+  .method-section {
+    border-top: 1px solid var(--border);
+    padding: 56px 0 64px;
+  }
+  .method-header {
+    display: flex; align-items: flex-start;
+    justify-content: space-between; gap: 48px; margin-bottom: 36px;
+  }
+  .method-heading {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800; font-size: 1.6rem;
+    letter-spacing: -0.025em; color: var(--text); line-height: 1.2;
+  }
+  .method-heading .accent {
+    background: linear-gradient(130deg, #4f8ef7 0%, #9b6ef5 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .method-intro {
+    font-size: 0.9rem; font-weight: 400;
+    color: var(--body); line-height: 1.8;
+    max-width: 400px; flex-shrink: 0;
+  }
+  .decisions-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  }
+  .d-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 24px 26px;
+    display: flex; gap: 18px; align-items: flex-start;
+    transition: border-color 0.2s;
+  }
+  .d-card:hover { border-color: var(--border2); }
+  .d-num {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800; font-size: 1.1rem;
+    color: var(--border2); flex-shrink: 0; line-height: 1;
+    padding-top: 2px; min-width: 28px;
+  }
+  .d-body strong {
+    display: block; font-size: 0.9rem; font-weight: 600;
+    color: var(--text); margin-bottom: 7px;
+  }
+  .d-body p {
+    font-size: 0.82rem; font-weight: 400;
+    color: var(--body); line-height: 1.75;
+  }
+  .d-body p em {
+    font-style: normal; font-weight: 600;
+    color: var(--text);
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 36px 0;
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    align-items: start;
+    gap: 32px;
+  }
+  /* col 1: brand */
+  .f-brand { display: flex; flex-direction: column; gap: 6px; }
+  .f-logo {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800; font-size: 1rem;
+    color: var(--text); text-decoration: none; letter-spacing: -0.01em;
+    display: inline-block; margin-bottom: 2px;
+  }
+  .f-logo em { font-style: normal; color: var(--blue); }
+  .f-tagline { font-size: 0.78rem; font-weight: 400; color: var(--body); }
+  /* col 2: contact links */
+  .f-connect { display: flex; flex-direction: row; gap: 8px; justify-self: center; justify-content: center; align-items: center; }
+  .f-connect-lbl {
+    font-size: 0.63rem; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--label); margin-bottom: 4px;
+  }
+  .f-link {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.82rem; font-weight: 500; color: var(--body);
+    text-decoration: none; padding: 8px 14px; border-radius: 9px;
+    border: 1px solid var(--border);
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+    white-space: nowrap;
+  }
+  .f-link:hover { color: var(--text); border-color: var(--border2); background: var(--surface2); }
+  .f-link svg { width: 15px; height: 15px; fill: currentColor; flex-shrink: 0; }
+  .f-link.email svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  /* col 3: legal + copyright */
+  .f-right { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
+  .f-name { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+  .f-copy { font-size: 0.73rem; font-weight: 400; color: var(--label); }
+  .f-legal { display: flex; gap: 14px; margin-top: 6px; }
+  .f-legal a {
+    font-size: 0.73rem; font-weight: 500; color: var(--label);
+    text-decoration: none; transition: color 0.15s;
+  }
+  .f-legal a:hover { color: var(--body); }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 1100px) {
+    .model-grid { grid-template-columns: 1fr 1fr; }
+    .decisions-grid { grid-template-columns: 1fr; }
+    .method-header { flex-direction: column; gap: 16px; }
+  }
+  @media (max-width: 860px) {
+    .hero-h1 { white-space: normal; font-size: clamp(1.9rem, 5vw, 2.8rem); }
+    .hero-layout { flex-direction: column; gap: 32px; }
+    .hero-right { width: 100%; flex-direction: row; flex-wrap: wrap; }
+    .stat-main { flex: 1; min-width: 200px; }
+    .stat-row { flex: 1; min-width: 200px; }
+    .steps-row { flex-wrap: wrap; gap: 12px; }
+    .step-item { border-right: none; padding-right: 0; margin-right: 0; }
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+    .f-right { align-items: flex-start; }
+  }
+  @media (max-width: 600px) {
+    .model-grid { grid-template-columns: 1fr; }
+    .footer-grid { grid-template-columns: 1fr; }
+    .nav-link:not(.gh) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="inner nav-inner">
+    <a href="/" class="logo">Zanevo<em>.</em></a>
+    <div class="nav-links">
+      <a href="#models" class="nav-link">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Models
+      </a>
+      <a href="#methodology" class="nav-link">
+        <svg viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/></svg>
+        Methodology
+      </a>
+      <a href="https://github.com/ammartech-sol" target="_blank" rel="noopener" class="nav-link gh">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+</nav>
+
+<main>
+
+  <!-- HERO -->
+  <section class="hero-section">
+    <div class="inner">
+      <div class="hero-layout">
+
+        <div class="hero-left">
+          <div class="eyebrow">
+            <span class="eyebrow-dot"></span>
+            <span>ML Prediction Suite · 7 Models Live</span>
+          </div>
+
+          <h1 class="hero-h1"><span class="accent">Zanevo</span></h1>
+          <p class="hero-tagline">Run real ML predictions. Live.</p>
+
+          <p class="hero-desc">A unified platform for production-trained ML models across healthcare, business, real estate, and education. Enter inputs, get predictions backed by real datasets.</p>
+
+          <div class="steps-row">
+            <div class="step-item">
+              <div class="step-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div>
+              <div><span class="step-label-num">Step 01</span><span class="step-label-text">Select a model</span></div>
+            </div>
+            <div class="step-item">
+              <div class="step-icon"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+              <div><span class="step-label-num">Step 02</span><span class="step-label-text">Enter input data</span></div>
+            </div>
+            <div class="step-item">
+              <div class="step-icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+              <div><span class="step-label-num">Step 03</span><span class="step-label-text">Get your prediction</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- HERO RIGHT — completely redesigned -->
+        <div class="hero-right">
+          <div class="stat-main">
+            <div class="stat-main-label">Models deployed</div>
+            <div class="stat-main-num">7</div>
+            <div class="stat-main-sub">Across healthcare, business,<br>real estate &amp; education</div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-mini c-green-box">
+              <span class="stat-mini-val c-green">2</span>
+              <span class="stat-mini-lbl">Models<br>Regression</span>
+            </div>
+            <div class="stat-mini c-purple-box">
+              <span class="stat-mini-val c-purple">1</span>
+              <span class="stat-mini-lbl">Model<br>Clustering</span>
+            </div>
+            <div class="stat-mini full-width c-blue-box">
+              <span class="stat-mini-val c-blue">4</span>
+              <span class="stat-mini-lbl">Models · Classification</span>
+            </div>
+          </div>
+          <div class="live-badge">
+            <span class="live-dot"></span>
+            All systems live
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- MODEL GRID -->
+  <div class="inner">
+    <section class="models-section" id="models">
+      <div class="section-header">
+        <span class="section-lbl">All Models</span>
+        <div class="live-chip"><span></span> 7 live</div>
+      </div>
+
+      <div class="model-grid">
+
+        <!-- 1. Customer Churn -->
+        <a href="/churn/" class="model-card c-blue">
+          <div class="card-top">
+            <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></div>
+            <span class="card-metric">Threshold 0.323</span>
+          </div>
+          <div class="card-algo">Random Forest · Telco Dataset</div>
+          <div class="card-title">Customer Churn</div>
+          <div class="card-desc">Identifies telecom customers at cancellation risk. Threshold tuned below 0.5 to maximize recall, catching more churners at the cost of some precision.</div>
+          <div class="card-cta">Run assessment</div>
+        </a>
+
+        <!-- 2. Employee Attrition -->
+        <a href="/attrition/" class="model-card c-purple">
+          <div class="card-top">
+            <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+            <span class="card-metric">Threshold 0.30</span>
+          </div>
+          <div class="card-algo">XGBoost · IBM HR Dataset</div>
+          <div class="card-title">Employee Attrition</div>
+          <div class="card-desc">Predicts employee flight risk from satisfaction, tenure, and compensation. Threshold lowered to 0.30 to prioritize early detection over precision.</div>
+          <div class="card-cta">Run assessment</div>
+        </a>
+
+        <!-- 3. Heart Disease -->
+        <a href="/heart/" class="model-card c-orange">
+          <div class="card-top">
+            <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
+            <span class="card-metric">13 Features</span>
+          </div>
+          <div class="card-algo">Logistic Regression · Cleveland Dataset</div>
+          <div class="card-title">Heart Disease Risk</div>
+          <div class="card-desc">Evaluates cardiovascular risk from ECG results, cholesterol, and chest pain type. StandardScaler pipeline on the UCI Cleveland Heart Disease dataset.</div>
+          <div class="card-cta">Run assessment</div>
+        </a>
+
+        <!-- 4. Census Income -->
+        <a href="/census/" class="model-card c-amber">
+          <div class="card-top">
+            <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+            <span class="card-metric">F1 0.72</span>
+          </div>
+          <div class="card-algo">XGBoost · UCI Adult Census</div>
+          <div class="card-title">Adult Census Income</div>
+          <div class="card-desc">Classifies income above or below $50K on an imbalanced dataset (76/24 split). Threshold shifted from 0.5 → 0.4 to improve recall on the minority class.</div>
+          <div class="card-cta">Run assessment</div>
+        </a>
+
+        <!-- 5. Ames House Price -->
+        <a href="/ames/" class="model-card c-green">
+          <div class="card-top">
+            <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+            <span class="card-metric">R² 0.9315</span>
+          </div>
+          <div class="card-algo">Ridge Regression · Ames Housing</div>
+          <div class="card-title">Ames House Price</div>
+          <div class="card-desc">Predicts residential sale prices from 80+ features. Ridge selected over LightGBM for better out-of-box generalization. MAE of $11,004 on the test set.</div>
+          <div class="card-cta">Run prediction</div>
+        </a>
+
+        <!-- 6. Student Performance -->
+        <a href="/student/" class="model-card c-teal">
+          <div class="card-top">
+            <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg></div>
+            <span class="card-metric">R² ≈ 0.99</span>
+          </div>
+          <div class="card-algo">Random Forest · Student Performance Prediction</div>
+          <div class="card-title">Student Performance</div>
+          <div class="card-desc">Predicts a student's performance index from study hours, previous scores, and sleep. Previous scores dominate feature importance by a wide margin.</div>
+          <div class="card-cta">Run prediction</div>
+        </a>
+
+        <!-- 7. E-Commerce Segmentation -->
+        <a href="/ecommerce/" class="model-card c-violet">
+          <div class="card-top">
+            <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 001.98-1.67L23 6H6"/></svg></div>
+            <span class="card-metric">Silhouette 0.4129</span>
+          </div>
+          <div class="card-algo">K-Means · Olist E-Commerce Dataset</div>
+          <div class="card-title">Customer Segmentation</div>
+          <div class="card-desc">Segments 83,000 customers into 3 behavioral groups using RFM analysis. K=3 selected via Elbow and Silhouette methods; Frequency dropped after showing zero variance.</div>
+          <div class="card-cta">Run segmentation</div>
+        </a>
+
+      </div>
+    </section>
+  </div>
+
+  <!-- METHODOLOGY -->
+  <div class="inner">
+    <section class="method-section" id="methodology">
+      <div class="method-header">
+        <div>
+          <div class="section-lbl" style="margin-bottom:12px;">Technical Decisions</div>
+          <div class="method-heading">Why I built it this <span class="accent">way</span></div>
+        </div>
+        <p class="method-intro">These aren't just sklearn demos. Each model involved a deliberate tradeoff, between precision and recall, between model complexity and generalization, between a good metric and a useful one.</p>
+      </div>
+      <div class="decisions-grid">
+        <div class="d-card">
+          <div class="d-num">01</div>
+          <div class="d-body">
+            <strong>Threshold tuning on imbalanced classifiers</strong>
+            <p>Churn (0.323), Attrition (0.30), and Census Income (0.4) all use custom thresholds below 0.5. The default threshold optimizes accuracy, the wrong objective when missing a churner costs more than a false alarm. Lowering the threshold shifts the tradeoff toward <em>catching more positives</em>.</p>
+          </div>
+        </div>
+      <div class="d-card">
+        <div class="d-num">02</div>
+        <div class="d-body">
+          <strong>Ridge over LightGBM for Ames Housing</strong>
+          <p>LightGBM showed a <em>6.4-point train/test gap</em> (0.9826 vs 0.9183) without tuning, a clear sign of overfitting. Ridge with L2 regularization handled the 167-feature post-encoding space better out of the box. A well-regularized linear model beat the tree here.</p>
+        </div>
+      </div>
+      <div class="d-card">
+        <div class="d-num">03</div>
+        <div class="d-body">
+          <strong>Dataset size and interpretability drive algorithm choice</strong>
+          <p>Heart Disease uses Logistic Regression because the Cleveland dataset is only <em>303 rows</em> and clinical interpretability matters more than marginal accuracy gains. Attrition uses XGBoost because HR data has complex feature interactions that linear models structurally miss. <em>Algorithm selection followed the data.</em></p>
+        </div>
+      </div>
+      <div class="d-card">
+        <div class="d-num">04</div>
+        <div class="d-body">
+          <strong>Feature engineering validated by importance scores</strong>
+          <p>Six features were engineered for the Attrition model including <em>IsOverworked</em>, combining overtime status with poor work-life balance as a stress signal. It ranked in the <em>top 5 most important features</em> out of 35, confirming the engineering decision rather than just adding noise.</p>
+        </div>
+      </div>
+      <div class="d-card">
+        <div class="d-num">05</div>
+        <div class="d-body">
+          <strong>F1 over accuracy on imbalanced datasets</strong>
+          <p>The UCI Adult dataset is 76/24 class-imbalanced. Predicting everyone as ≤$50K hits <em>76% accuracy while being completely useless</em>. The IBM HR dataset is 84/16. In both cases F1 and recall are the meaningful metrics, accuracy is a number that hides a broken model.</p>
+        </div>
+      </div>
+      <div class="d-card">
+        <div class="d-num">06</div>
+        <div class="d-body">
+          <strong>Dropping zero-variance features before clustering</strong>
+          <p>In the Olist segmentation project, Frequency showed that over <em>90% of customers had placed exactly one order</em>. After log transform and outlier removal it had a standard deviation of 0.0, meaning it could not separate any customers from each other. A feature that adds no signal only distorts centroid positions. <em>It was dropped.</em></p>
+        </div>
+      </div>
+  </div>
+    </section>
+  </div>
+
+</main>
+
+    
+
+<!-- FOOTER -->
+<footer>
+  <div class="inner">
+    <div class="footer-grid">
+
+      <!-- Col 1: brand -->
+      <div class="f-brand">
+        <a href="/" class="f-logo">Zanevo</a>
+        <span class="f-tagline">ML Engineer · Django · XGBoost · Scikit-learn</span>
+      </div>
+
+      
+      <!-- Col 2: contact links -->
+      <div class="f-connect">
+        <a href="https://linkedin.com/in/ammarmasroor" target="_blank" rel="noopener" class="f-link">
+          <svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+          LinkedIn
+        </a>
+        <a href="https://github.com/ammartech-sol" target="_blank" rel="noopener" class="f-link">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+          GitHub
+        </a>
+      </div>
+
+      <!-- Col 3: name + legal -->
+      <div class="f-right">
+        <span class="f-name">Muhammad Ammar Masroor</span>
+        <span class="f-copy">© 2026 · Built with Django</span>
+        <div class="f-legal">
+          <a href="/terms/">Terms</a>
+          <a href="/privacy/">Privacy</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>House Price Prediction - Zanevo</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:          #06090f;
+    --surface:     #0d1525;
+    --surface2:    #111f34;
+    --surface3:    #1a2438;
+    --border:      #1e2e48;
+    --border2:     #273d5e;
+    --text:        #f0f4ff;
+    --muted:       #9baabf;
+    --subtle:      #3a4a6b;
+    --ph:          #4a5a7a;
+    --accent:      #10b981;
+    --accent-dim:  rgba(16,185,129,0.12);
+    --accent-ring: rgba(16,185,129,0.22);
+    --error:       #f87171;
+    --max-w:       1440px;
+    --pad:         clamp(1.5rem, 4vw, 4rem);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Space Grotesk', sans-serif; font-weight: 400;
+    min-height: 100vh; display: flex; flex-direction: column;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: radial-gradient(circle, rgba(30,50,90,0.45) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 90% 50% at 50% -10%, rgba(79,142,247,0.09) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 90% 80%,  rgba(155,110,245,0.06) 0%, transparent 55%);
+    pointer-events: none; z-index: 0;
+  }
+  * { position: relative; z-index: 1; }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 200;
+    background: rgba(6,9,15,0.92);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 var(--pad);
+    width: 100%;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 62px;
+  }
+  .logo {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800; font-size: 1.05rem;
+    color: var(--text); text-decoration: none; letter-spacing: -0.01em;
+  }
+  .logo em { font-style: normal; color: var(--accent); }
+  .nav-links { display: flex; align-items: center; gap: 10px; }
+  .nav-link {
+    font-size: 0.82rem; font-weight: 500; color: var(--muted);
+    text-decoration: none; padding: 6px 14px; border-radius: 6px;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; gap: 7px;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+  }
+  .nav-link:hover { color: var(--text); background: var(--surface); border-color: var(--border2); }
+  .nav-link svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+  /* SHELL */
+  .shell { display: grid; grid-template-columns: 300px 1fr; flex: 1; }
+
+  /* SIDEBAR */
+  .sidebar { border-right: 1px solid var(--border); padding: 36px 28px; position: sticky; top: 62px; height: calc(100vh - 62px); overflow-y: auto; display: flex; flex-direction: column; }
+  .sidebar::-webkit-scrollbar { width: 0; }
+
+  .model-badge { display: inline-flex; align-items: center; gap: 7px; background: var(--accent-dim); border: 1px solid rgba(16,185,129,0.28); color: var(--accent); font-size: 0.65rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 5px 11px; border-radius: 4px; width: fit-content; margin-bottom: 20px; }
+  .badge-dot { width: 5px; height: 5px; background: var(--accent); border-radius: 50%; animation: blink 2s infinite; flex-shrink: 0; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  .sidebar-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.55rem; line-height: 1.1; letter-spacing: -0.02em; color: var(--text); margin-bottom: 12px; }
+  .sidebar-title span { color: var(--accent); display: block; }
+  .sidebar-desc { font-size: 0.875rem; color: var(--muted); line-height: 1.72; margin-bottom: 20px; }
+
+  .computed-note { background: var(--accent-dim); border: 1px solid rgba(16,185,129,0.18); border-radius: 8px; padding: 12px 14px; margin-bottom: 24px; }
+  .computed-note strong { display: block; font-size: 0.62rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+  .computed-note p { font-size: 0.79rem; color: var(--muted); line-height: 1.6; }
+
+  .field-counter { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 24px; }
+  .fc-track { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .fc-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s ease; width: 0%; }
+  .fc-label { font-size: 0.72rem; color: var(--muted); white-space: nowrap; font-family: 'Syne', sans-serif; font-weight: 700; }
+  .fc-count { font-size: 0.72rem; color: var(--accent); font-family: 'Syne', sans-serif; font-weight: 700; min-width: 32px; text-align: right; }
+
+  .sidebar-signals { }
+  .signals-title { font-size: 0.63rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--subtle); margin-bottom: 12px; }
+  .signal-item { display: flex; align-items: flex-start; gap: 9px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 0.81rem; color: var(--muted); line-height: 1.45; }
+  .signal-item:last-child { border-bottom: none; }
+  .signal-dot { width: 5px; height: 5px; background: var(--accent); border-radius: 50%; flex-shrink: 0; margin-top: 6px; opacity: 0.55; }
+
+  /* FORM AREA */
+  .form-area { padding: 36px 48px 64px; max-width: calc(var(--max-w) - 300px); }
+
+  .disclaimer { display: flex; align-items: center; gap: 10px; padding: 11px 16px; margin-bottom: 32px; background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.18); border-radius: 7px; font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+  .disclaimer svg { width: 14px; height: 14px; color: var(--accent); flex-shrink: 0; }
+
+  .sh { display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--border); margin-bottom: 22px; margin-top: 32px; }
+  .sh:first-of-type { margin-top: 0; }
+  .sh-bar { width: 3px; height: 13px; background: var(--accent); border-radius: 2px; flex-shrink: 0; }
+  .sh-text { font-size: 0.67rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); flex: 1; }
+  .sh-count { font-size: 0.67rem; font-family: 'Syne', sans-serif; color: var(--subtle); }
+
+  .row2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 18px; margin-bottom: 18px; }
+  .row3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; margin-bottom: 18px; }
+  .row4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 18px; margin-bottom: 18px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  label { font-size: 0.81rem; font-weight: 500; color: var(--muted); letter-spacing: 0.01em; cursor: pointer; }
+
+  /* NUMBER INPUTS */
+  input[type="number"] {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 0.92rem; font-weight: 400;
+    padding: 11px 13px; width: 100%; outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    -webkit-appearance: none; appearance: none;
+  }
+  input[type="number"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-ring); background: #181f32; }
+  input[type="number"]:not(:placeholder-shown) { border-color: rgba(16,185,129,0.35); }
+  input[type="number"]::placeholder { color: var(--ph); }
+  .field-hint { font-size: 0.72rem; color: var(--subtle); margin-top: -2px; }
+  .field-error { display: none; font-size: 0.72rem; color: var(--error); margin-top: -2px; }
+  input:invalid:not(:focus):not(:placeholder-shown) { border-color: var(--error); box-shadow: 0 0 0 3px rgba(248,113,113,0.12); }
+  input:invalid:not(:focus):not(:placeholder-shown) ~ .field-error { display: block; }
+
+  /* CUSTOM SELECT */
+  .cs-wrapper {
+    position: relative;
+    user-select: none;
+    z-index: 1;
+  }
+  .cs-wrapper.open {
+    z-index: 400;
+  }
+  .field.has-open-dropdown {
+    z-index: 500 !important;
+  }
+  .row2.has-open-dropdown,
+  .row3.has-open-dropdown,
+  .row4.has-open-dropdown {
+    z-index: 500 !important;
+  }
+  .cs-wrapper select { position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0; }
+
+  .cs-trigger {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 7px; padding: 11px 13px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.92rem; font-weight: 400;
+    color: var(--ph); cursor: pointer; min-height: 44px;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  }
+  .cs-trigger.has-value { color: var(--text); border-color: rgba(16,185,129,0.35); }
+  .cs-wrapper.open .cs-trigger { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-ring); background: #181f32; }
+
+  .cs-arrow { flex-shrink: 0; margin-left: 8px; transition: transform 0.2s; color: var(--muted); }
+  .cs-wrapper.open .cs-arrow { transform: rotate(180deg); }
+
+  .cs-dropdown {
+    display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: var(--surface3); border: 1px solid var(--border);
+    border-radius: 8px; z-index: 300; overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+    max-height: 220px; overflow-y: auto;
+  }
+  .cs-dropdown::-webkit-scrollbar { width: 4px; }
+  .cs-dropdown::-webkit-scrollbar-track { background: var(--surface3); }
+  .cs-dropdown::-webkit-scrollbar-thumb { background: var(--subtle); border-radius: 2px; }
+  .cs-wrapper.open .cs-dropdown { display: block; }
+
+  .cs-option {
+    padding: 11px 14px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 400;
+    color: var(--muted); cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+    border-bottom: 1px solid var(--border);
+  }
+  .cs-option:last-child { border-bottom: none; }
+  .cs-option.placeholder-opt { color: var(--ph); font-size: 0.85rem; cursor: default; }
+  .cs-option:not(.placeholder-opt):hover { background: rgba(16,185,129,0.12); color: var(--text); }
+  .cs-option.selected { background: rgba(16,185,129,0.18); color: var(--text); font-weight: 500; }
+
+  /* ACTION ROW */
+  .action-row {
+    display: flex; align-items: center; gap: 12px;
+    margin-top: 36px; padding-top: 28px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .btn-predict {
+    background: var(--accent); color: #fff; border: none; border-radius: 8px;
+    padding: 12px 28px; font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: 0.88rem; letter-spacing: 0.04em; cursor: pointer;
+    transition: opacity 0.15s, transform 0.12s, box-shadow 0.15s;
+    box-shadow: 0 3px 16px rgba(16,185,129,0.28);
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  }
+  .btn-predict svg { width: 14px; height: 14px; flex-shrink: 0; }
+  .btn-predict:hover { opacity: 0.88; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(16,185,129,0.38); }
+  .btn-predict:active { transform: translateY(0); }
+  .btn-clear {
+    background: transparent; color: var(--muted);
+    border: 1px solid rgba(255,255,255,0.10); border-radius: 8px;
+    padding: 12px 22px; font-family: 'DM Sans', sans-serif; font-weight: 500;
+    font-size: 0.88rem; cursor: pointer; flex-shrink: 0;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .btn-clear:hover { color: var(--text); border-color: var(--subtle); }
+
+  /* RESULT BAR — price prediction layout differs from classifier result */
+  .result-bar {
+    display: none; flex: 1; min-width: 320px;
+    border-radius: 9px; border: 1px solid rgba(16,185,129,0.28);
+    background: rgba(16,185,129,0.07);
+    padding: 16px 24px;
+    grid-template-columns: auto 1px 1fr 1px auto;
+    align-items: center; gap: 20px;
+    animation: fadeUp 0.35s ease both;
+  }
+  .result-bar.show { display: grid; }
+
+  /* price block */
+  .rb-price-block { text-align: center; }
+  .rb-price-eyebrow { font-size: 0.6rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .rb-price { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.7rem; color: var(--accent); letter-spacing: -0.02em; white-space: nowrap; }
+
+  .rb-divider { background: var(--border); align-self: stretch; }
+
+  /* metrics block */
+  .rb-metrics { display: flex; flex-direction: column; gap: 6px; padding: 0 8px; }
+  .rb-metric { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+  .rb-metric-label { font-size: 0.75rem; color: var(--muted); }
+  .rb-metric-val { font-size: 0.75rem; font-weight: 500; color: var(--text); font-family: 'Syne', sans-serif; }
+
+  /* icon block */
+  .rb-icon-block { display: flex; align-items: center; justify-content: center; }
+  .rb-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(16,185,129,0.15); display: flex; align-items: center; justify-content: center; }
+  .rb-icon svg { width: 18px; height: 18px; color: var(--accent); }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+  /* RESPONSIVE */
+  @media (max-width: 960px) {
+    .shell { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); padding: 28px 24px; }
+    .form-area { padding: 28px 24px 56px; max-width: 100%; }
+    .result-bar { grid-template-columns: 1fr; min-width: 100%; }
+    .rb-divider { display: none; }
+    .rb-price { font-size: 1.4rem; }
+  }
+  @media (max-width: 768px) { .row4 { grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 640px) { .row2, .row3, .row4 { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 420px) { .row2, .row3, .row4 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="logo">Zanevo<em>.</em></a>
+    <div class="nav-links">
+      <a href="/#models" class="nav-link">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Models
+      </a>
+      <a href="/#methodology" class="nav-link">
+        <svg viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/></svg>
+        Methodology
+      </a>
+      <a href="/" class="nav-link">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home
+      </a>
+    </div>
+  </div>
+</nav>
+
+<div style="max-width:var(--max-w);margin:0 auto;width:100%;display:flex;flex:1;">
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="model-badge"><span class="badge-dot"></span> Ridge Regression</div>
+    <h1 class="sidebar-title">House Price<span>Prediction</span></h1>
+    <p class="sidebar-desc">Estimate the sale price of a residential property in Ames, Iowa. The model explains 93.15% of price variance with a mean absolute error of $11,004.</p>
+
+    <div class="computed-note">
+      <strong>Auto-computed features</strong>
+      <p>Total SF, Total Bathrooms, House Age, and Remod Age are derived from your inputs automatically. Never enter them directly.</p>
+    </div>
+
+    <div class="field-counter">
+      <span class="fc-label">Fields filled</span>
+      <div class="fc-track"><div class="fc-fill" id="fc-fill"></div></div>
+      <span class="fc-count" id="fc-count">0 / 28</span>
+    </div>
+
+    <div class="sidebar-signals">
+      <div class="signals-title">Top price drivers</div>
+      <div class="signal-item"><span class="signal-dot"></span>Overall quality and above-ground living area as primary value signals</div>
+      <div class="signal-item"><span class="signal-dot"></span>Neighborhood and MS Zoning capturing location effects</div>
+      <div class="signal-item"><span class="signal-dot"></span>Exterior material quality (brick face signals premium construction)</div>
+      <div class="signal-item"><span class="signal-dot"></span>Total square footage combining basement and above-ground floors</div>
+    </div>
+  </aside>
+
+  <!-- FORM -->
+  <main class="form-area">
+    <form method="POST" id="ames-form" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="submitted" value="1">
+
+      <div class="disclaimer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Trained on Ames, Iowa sales data from 2006 to 2010. Predictions are estimates only and may not reflect current market conditions.
+      </div>
+
+      <!-- SECTION 1: Property Identity -->
+      <div class="sh"><div class="sh-bar"></div><span class="sh-text">Property Identity</span><span class="sh-count">6 fields</span></div>
+      <div class="row3">
+        <div class="field">
+          <label>MS Zoning</label>
+          <div class="cs-wrapper" data-name="MS Zoning">
+            <select name="MS Zoning" required tabindex="-1">
+              <option value="">Select...</option>
+              <option value="RL"    {% if f_ms_zoning == 'RL'    %}selected{% endif %}>RL — Residential Low Density</option>
+              <option value="RM"    {% if f_ms_zoning == 'RM'    %}selected{% endif %}>RM — Residential Medium Density</option>
+              <option value="FV"    {% if f_ms_zoning == 'FV'    %}selected{% endif %}>FV — Floating Village Residential</option>
+              <option value="RH"    {% if f_ms_zoning == 'RH'    %}selected{% endif %}>RH — Residential High Density</option>
+              <option value="C (all)" {% if f_ms_zoning == 'C (all)' %}selected{% endif %}>C (all) — Commercial</option>
+            </select>
+            <div class="cs-trigger" tabindex="0"><span class="cs-label">Select...</span><svg class="cs-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cs-dropdown">
+              <div class="cs-option placeholder-opt" data-value="">Select...</div>
+              <div class="cs-option" data-value="RL">RL — Residential Low Density</div>
+              <div class="cs-option" data-value="RM">RM — Residential Medium Density</div>
+              <div class="cs-option" data-value="FV">FV — Floating Village Residential</div>
+              <div class="cs-option" data-value="RH">RH — Residential High Density</div>
+              <div class="cs-option" data-value="C (all)">C (all) — Commercial</div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Neighborhood</label>
+          <div class="cs-wrapper" data-name="Neighborhood">
+            <select name="Neighborhood" required tabindex="-1">
+              <option value="">Select...</option>
+              <option value="Blmngtn" {% if f_neighborhood == 'Blmngtn' %}selected{% endif %}>Bloomington Heights</option>
+              <option value="Blueste" {% if f_neighborhood == 'Blueste' %}selected{% endif %}>Bluestem</option>
+              <option value="BrDale"  {% if f_neighborhood == 'BrDale'  %}selected{% endif %}>Briardale</option>
+              <option value="BrkSide" {% if f_neighborhood == 'BrkSide' %}selected{% endif %}>Brookside</option>
+              <option value="ClearCr" {% if f_neighborhood == 'ClearCr' %}selected{% endif %}>Clear Creek</option>
+              <option value="CollgCr" {% if f_neighborhood == 'CollgCr' %}selected{% endif %}>College Creek</option>
+              <option value="Crawfor" {% if f_neighborhood == 'Crawfor' %}selected{% endif %}>Crawford</option>
+              <option value="Edwards" {% if f_neighborhood == 'Edwards' %}selected{% endif %}>Edwards</option>
+              <option value="Gilbert" {% if f_neighborhood == 'Gilbert' %}selected{% endif %}>Gilbert</option>
+              <option value="Greens"  {% if f_neighborhood == 'Greens'  %}selected{% endif %}>Greens</option>
+              <option value="GrnHill" {% if f_neighborhood == 'GrnHill' %}selected{% endif %}>Green Hills</option>
+              <option value="IDOTRR"  {% if f_neighborhood == 'IDOTRR'  %}selected{% endif %}>Iowa DOT and Rail Road</option>
+              <option value="Landmrk" {% if f_neighborhood == 'Landmrk' %}selected{% endif %}>Landmark</option>
+              <option value="MeadowV" {% if f_neighborhood == 'MeadowV' %}selected{% endif %}>Meadow Village</option>
+              <option value="Mitchel" {% if f_neighborhood == 'Mitchel' %}selected{% endif %}>Mitchell</option>
+              <option value="NAmes"   {% if f_neighborhood == 'NAmes'   %}selected{% endif %}>North Ames</option>
+              <option value="NoRidge" {% if f_neighborhood == 'NoRidge' %}selected{% endif %}>Northridge</option>
+              <option value="NPkVill" {% if f_neighborhood == 'NPkVill' %}selected{% endif %}>Northpark Villa</option>
+              <option value="NridgHt" {% if f_neighborhood == 'NridgHt' %}selected{% endif %}>Northridge Heights</option>
+              <option value="NWAmes"  {% if f_neighborhood == 'NWAmes'  %}selected{% endif %}>Northwest Ames</option>
+              <option value="OldTown" {% if f_neighborhood == 'OldTown' %}selected{% endif %}>Old Town</option>
+              <option value="SWISU"   {% if f_neighborhood == 'SWISU'   %}selected{% endif %}>South and West of Iowa State University</option>
+              <option value="Sawyer"  {% if f_neighborhood == 'Sawyer'  %}selected{% endif %}>Sawyer</option>
+              <option value="SawyerW" {% if f_neighborhood == 'SawyerW' %}selected{% endif %}>Sawyer West</option>
+              <option value="Somerst" {% if f_neighborhood == 'Somerst' %}selected{% endif %}>Somerset</option>
+              <option value="StoneBr" {% if f_neighborhood == 'StoneBr' %}selected{% endif %}>Stone Brook</option>
+              <option value="Timber"  {% if f_neighborhood == 'Timber'  %}selected{% endif %}>Timberland</option>
+              <option value="Veenker" {% if f_neighborhood == 'Veenker' %}selected{% endif %}>Veenker</option>
+            </select>
+            <div class="cs-trigger" tabindex="0"><span class="cs-label">Select...</span><svg class="cs-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cs-dropdown">
+              <div class="cs-option placeholder-opt" data-value="">Select...</div>
+              <div class="cs-option" data-value="Blmngtn">Bloomington Heights</div>
+              <div class="cs-option" data-value="Blueste">Bluestem</div>
+              <div class="cs-option" data-value="BrDale">Briardale</div>
+              <div class="cs-option" data-value="BrkSide">Brookside</div>
+              <div class="cs-option" data-value="ClearCr">Clear Creek</div>
+              <div class="cs-option" data-value="CollgCr">College Creek</div>
+              <div class="cs-option" data-value="Crawfor">Crawford</div>
+              <div class="cs-option" data-value="Edwards">Edwards</div>
+              <div class="cs-option" data-value="Gilbert">Gilbert</div>
+              <div class="cs-option" data-value="Greens">Greens</div>
+              <div class="cs-option" data-value="GrnHill">Green Hills</div>
+              <div class="cs-option" data-value="IDOTRR">Iowa DOT and Rail Road</div>
+              <div class="cs-option" data-value="Landmrk">Landmark</div>
+              <div class="cs-option" data-value="MeadowV">Meadow Village</div>
+              <div class="cs-option" data-value="Mitchel">Mitchell</div>
+              <div class="cs-option" data-value="NAmes">North Ames</div>
+              <div class="cs-option" data-value="NoRidge">Northridge</div>
+              <div class="cs-option" data-value="NPkVill">Northpark Villa</div>
+              <div class="cs-option" data-value="NridgHt">Northridge Heights</div>
+              <div class="cs-option" data-value="NWAmes">Northwest Ames</div>
+              <div class="cs-option" data-value="OldTown">Old Town</div>
+              <div class="cs-option" data-value="SWISU">South and West of Iowa State University</div>
+              <div class="cs-option" data-value="Sawyer">Sawyer</div>
+              <div class="cs-option" data-value="SawyerW">Sawyer West</div>
+              <div class="cs-option" data-value="Somerst">Somerset</div>
+              <div class="cs-option" data-value="StoneBr">Stone Brook</div>
+              <div class="cs-option" data-value="Timber">Timberland</div>
+              <div class="cs-option" data-value="Veenker">Veenker</div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Building Type</label>
+          <div class="cs-wrapper" data-name="Bldg Type">
+            <select name="Bldg Type" required tabindex="-1">
+              <option value="">Select...</option>
+              <option value="1Fam"   {% if f_bldg_type == '1Fam'   %}selected{% endif %}>Single-family Detached</option>
+              <option value="2fmCon" {% if f_bldg_type == '2fmCon' %}selected{% endif %}>Two-family Conversion</option>
+              <option value="Duplex" {% if f_bldg_type == 'Duplex' %}selected{% endif %}>Duplex</option>
+              <option value="TwnhsE" {% if f_bldg_type == 'TwnhsE' %}selected{% endif %}>Townhouse End Unit</option>
+              <option value="Twnhs"  {% if f_bldg_type == 'Twnhs'  %}selected{% endif %}>Townhouse Inside Unit</option>
+            </select>
+            <div class="cs-trigger" tabindex="0"><span class="cs-label">Select...</span><svg class="cs-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cs-dropdown">
+              <div class="cs-option placeholder-opt" data-value="">Select...</div>
+              <div class="cs-option" data-value="1Fam">Single-family Detached</div>
+              <div class="cs-option" data-value="2fmCon">Two-family Conversion</div>
+              <div class="cs-option" data-value="Duplex">Duplex</div>
+              <div class="cs-option" data-value="TwnhsE">Townhouse End Unit</div>
+              <div class="cs-option" data-value="Twnhs">Townhouse Inside Unit</div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>House Style</label>
+          <div class="cs-wrapper" data-name="House Style">
+            <select name="House Style" required tabindex="-1">
+              <option value="">Select...</option>
+              <option value="1Story"  {% if f_house_style == '1Story'  %}selected{% endif %}>1 Story</option>
+              <option value="2Story"  {% if f_house_style == '2Story'  %}selected{% endif %}>2 Story</option>
+              <option value="1.5Fin"  {% if f_house_style == '1.5Fin'  %}selected{% endif %}>1.5 Story Finished</option>
+              <option value="1.5Unf" {% if f_house_style == '1.5Unf'  %}selected{% endif %}>1.5 Story Unfinished</option>
+              <option value="2.5Fin"  {% if f_house_style == '2.5Fin'  %}selected{% endif %}>2.5 Story Finished</option>
+              <option value="2.5Unf"  {% if f_house_style == '2.5Unf'  %}selected{% endif %}>2.5 Story Unfinished</option>
+              <option value="SFoyer"  {% if f_house_style == 'SFoyer'  %}selected{% endif %}>Split Foyer</option>
+              <option value="SLvl"    {% if f_house_style == 'SLvl'    %}selected{% endif %}>Split Level</option>
+            </select>
+            <div class="cs-trigger" tabindex="0"><span class="cs-label">Select...</span><svg class="cs-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cs-dropdown">
+              <div class="cs-option placeholder-opt" data-value="">Select...</div>
+              <div class="cs-option" data-value="1Story">1 Story</div>
+              <div class="cs-option" data-value="2Story">2 Story</div>
+              <div class="cs-option" data-value="1.5Fin">1.5 Story Finished</div>
+              <div class="cs-option" data-value="1.5Unf">1.5 Story Unfinished</div>
+              <div class="cs-option" data-value="2.5Fin">2.5 Story Finished</div>
+              <div class="cs-option" data-value="2.5Unf">2.5 Story Unfinished</div>
+              <div class="cs-option" data-value="SFoyer">Split Foyer</div>
+              <div class="cs-option" data-value="SLvl">Split Level</div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Lot Shape</label>
+          <div class="cs-wrapper" data-name="Lot Shape">
+            <select name="Lot Shape" required tabindex="-1">
+              <option value="">Select...</option>
+              <option value="Reg"  {% if f_lot_shape == 'Reg'  %}selected{% endif %}>Reg — Regular</option>
+              <option value="IR1"  {% if f_lot_shape == 'IR1'  %}selected{% endif %}>Slightly Irregular</option>
+              <option value="IR2"  {% if f_lot_shape == 'IR2'  %}selected{% endif %}>Moderately Irregular</option>
+              <option value="IR3"  {% if f_lot_shape == 'IR3'  %}selected{% endif %}>Irregular</option>
+            </select>
+            <div class="cs-trigger" tabindex="0"><span class="cs-label">Select...</span><svg class="cs-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cs-dropdown">
+              <div class="cs-option placeholder-opt" data-value="">Select...</div>
+              <div class="cs-option" data-value="Reg">Reg — Regular</div>
+              <div class="cs-option" data-value="IR1">Slightly Irregular</div>
+              <div class="cs-option" data-value="IR2">Moderately Irregular</div>
+              <div class="cs-option" data-value="IR3">Irregular</div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Sale Condition</label>
+          <div class="cs-wrapper" data-name="Sale Condition">
+            <select name="Sale Condition" required tabindex="-1">
+              <option value="">Select...</option>
+              <option value="Normal"  {% if f_sale_condition == 'Normal'  %}selected{% endif %}>Normal</option>
+              <option value="Abnorml" {% if f_sale_condition == 'Abnorml' %}selected{% endif %}>Abnormal — Foreclosure, Short Sale</option>
+              <option value="Partial" {% if f_sale_condition == 'Partial' %}selected{% endif %}>Partial — Home not complete at sale</option>
+              <option value="AdjLand" {% if f_sale_condition == 'AdjLand' %}selected{% endif %}>AdjLand — Adjoining Land Purchase</option>
+              <option value="Alloca"  {% if f_sale_condition == 'Alloca'  %}selected{% endif %}>Alloca — Allocation</option>
+              <option value="Family"  {% if f_sale_condition == 'Family'  %}selected{% endif %}>Family — Sale between family members</option>
+            </select>
+            <div class="cs-trigger" tabindex="0"><span class="cs-label">Select...</span><svg class="cs-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cs-dropdown">
+              <div class="cs-option placeholder-opt" data-value="">Select...</div>
+              <div class="cs-option" data-value="Normal">Normal</div>
+              <div class="cs-option" data-value="Abnorml">Abnormal — Foreclosure, Short Sale</div>
+              <div class="cs-option" data-value="Partial">Partial — Home not complete at sale</div>
+              <div class="cs-option" data-value="AdjLand">AdjLand — Adjoining Land Purchase</div>
+              <div class="cs-option" data-value="Alloca">Alloca — Allocation</div>
+              <div class="cs-option" data-value="Family">Family — Sale between family members</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 2: Quality and Year -->
+      <div class="sh"><div class="sh-bar"></div><span class="sh-text">Quality and Year</span><span class="sh-count">6 fields</span></div>
+      <div class="row3">
+        <div class="field">
+          <label>Overall Quality</label>
+          <div class="cs-wrapper" data-name="Overall Qual">
+            <select name="Overall Qual" required tabindex="-1">
+              <option value="">Select...</option>
+              <option value="1"  {% if f_overall_qual == '1'  %}selected{% endif %}>Very Poor</option>
+              <option value="2"  {% if f_overall_qual == '2'  %}selected{% endif %}>Poor</option>
+              <option value="3"  {% if f_overall_qual == '3'  %}selected{% endif %}>Fair</option>
+              <option value="4"  {% if f_overall_qual == '4'  %}selected{% endif %}>Below Average</option>
+              <option value="5"  {% if f_overall_qual == '5'  %}selected{% endif %}>Average</option>
+              <option value="6"  {% if f_overall_qual == '6'  %}selected{% endif %}>Above Average</option>
+              <option value="7"  {% if f_overall_qual == '7'  %}selected{% endif %}>Good</option>
+              <option value="8"  {% if f_overall_qual == '8'  %}selected{% endif %}>Very Good</option>
+              <option value="9"  {% if f_overall_qual == '9'  %}selected{% endif %}>Excellent</option>
+              <option value="10" {% if f_overall_qual == '10' %}selected{% endif %}>Very Excellent</option>
+            </select>
+            <div class="cs-trigger" tabindex="0"><span class="cs-label">Select...</span><svg class="cs-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cs-dropdown">
+              <div class="cs-option placeholder-opt" data-value="">Select...</div>
+              <div class="cs-option" data-value="1">Very Poor</div>
+              <div class="cs-option" data-value="2">Poor</div>
+              <div class="cs-option" data-value="3">Fair</div>
+              <div class="cs-option" data-value="4">Below Average</div>
+              <div class="cs-option" data-value="5">Average</div>
+              <div class="cs-option" data-value="6">Above Average</div>
+              <div class="cs-option" data-value="7">Good</div>
+              <div class="cs-option" data-value="8">Very Good</div>
+              <div class="cs-option" data-value="9">Excellent</div>
+              <div class="cs-option" data-value="10">Very Excellent</div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Overall Condition</label>
+          <div class="cs-wrapper" data-name="Overall Cond">
+            <select name="Overall Cond" required tabindex="-1">
+              <option value="">Select...</option>
+              <option value="1"  {% if f_overall_cond == '1'  %}selected{% endif %}>Very Poor</option>
+              <option value="2"  {% if f_overall_cond == '2'  %}selected{% endif %}>Poor</option>
+              <option value="3"  {% if f_overall_cond == '3'  %}selected{% endif %}>Fair</option>
+              <option value="4"  {% if f_overall_cond == '4'  %}selected{% endif %}>Below Average</option>
+              <option value="5"  {% if f_overall_cond == '5'  %}selected{% endif %}>Average</option>
+              <option value="6"  {% if f_overall_cond == '6'  %}selected{% endif %}>Above Average</option>
+              <option value="7"  {% if f_overall_cond == '7'  %}selected{% endif %}>Good</option>
+              <option value="8"  {% if f_overall_cond == '8'  %}selected{% endif %}>Very Good</option>
+              <option value="9"  {% if f_overall_cond == '9'  %}selected{% endif %}>Excellent</option>
+            </select>
+            <div class="cs-trigger" tabindex="0"><span class="cs-label">Select...</span><svg class="cs-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cs-dropdown">
+              <div class="cs-option placeholder-opt" data-value="">Select...</div>
+              <div class="cs-option" data-value="1">Very Poor</div>
+              <div class="cs-option" data-value="2">Poor</div>
+              <div class="cs-option" data-value="3">Fair</div>
+              <div class="cs-option" data-value="4">Below Average</div>
+              <div class="cs-option" data-value="5">Average</div>
+              <div class="cs-option" data-value="6">Above Average</div>
+              <div class="cs-option" data-value="7">Good</div>
+              <div class="cs-option" data-value="8">Very Good</div>
+              <div class="cs-option" data-value="9">Excellent</div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Exterior Quality</label>
+          <div class="cs-wrapper" data-name="Exter Qual">
+            <select name="Exter Qual" required tabindex="-1">
+              <option value="">Select...</option>
+              <option value="Po" {% if f_exter_qual == 'Po' %}selected{% endif %}>Poor</option>
+              <option value="Fa" {% if f_exter_qual == 'Fa' %}selected{% endif %}>Fair</option>
+              <option value="TA" {% if f_exter_qual == 'TA' %}selected{% endif %}>Typical</option>
+              <option value="Gd" {% if f_exter_qual == 'Gd' %}selected{% endif %}>Good</option>
+              <option value="Ex" {% if f_exter_qual == 'Ex' %}selected{% endif %}>Excellent</option>
+            </select>
+            <div class="cs-trigger" tabindex="0"><span class="cs-label">Select...</span><svg class="cs-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cs-dropdown">
+              <div class="cs-option placeholder-opt" data-value="">Select...</div>
+              <div class="cs-option" data-value="Po">Poor</div>
+              <div class="cs-option" data-value="Fa">Fair</div>
+              <div class="cs-option" data-value="TA">Typical</div>
+              <div class="cs-option" data-value="Gd">Good</div>
+              <div class="cs-option" data-value="Ex">Excellent</div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Kitchen Quality</label>
+          <div class="cs-wrapper" data-name="Kitchen Qual">
+            <select name="Kitchen Qual" required tabindex="-1">
+              <option value="">Select...</option>
+              <option value="Po" {% if f_kitchen_qual == 'Po' %}selected{% endif %}>Poor</option>
+              <option value="Fa" {% if f_kitchen_qual == 'Fa' %}selected{% endif %}>Fair</option>
+              <option value="TA" {% if f_kitchen_qual == 'TA' %}selected{% endif %}>Typical</option>
+              <option value="Gd" {% if f_kitchen_qual == 'Gd' %}selected{% endif %}>Good</option>
+              <option value="Ex" {% if f_kitchen_qual == 'Ex' %}selected{% endif %}>Excellent</option>
+            </select>
+            <div class="cs-trigger" tabindex="0"><span class="cs-label">Select...</span><svg class="cs-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cs-dropdown">
+              <div class="cs-option placeholder-opt" data-value="">Select...</div>
+              <div class="cs-option" data-value="Po">Poor</div>
+              <div class="cs-option" data-value="Fa">Fair</div>
+              <div class="cs-option" data-value="TA">Typical</div>
+              <div class="cs-option" data-value="Gd">Good</div>
+              <div class="cs-option" data-value="Ex">Excellent</div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="Year Built">Year Built</label>
+          <input type="number" id="Year Built" name="Year Built" placeholder="e.g. 1995" min="1872" max="2010" required value="{{ f_year_built }}">
+          <span class="field-hint">Original construction year</span>
+          <span class="field-error">Valid range: 1872 to 2010</span>
+        </div>
+        <div class="field">
+          <label for="Year Remod/Add">Year Remodeled</label>
+          <input type="number" id="Year Remod/Add" name="Year Remod/Add" placeholder="e.g. 2005" min="1950" max="2010" required value="{{ f_year_remod }}">
+          <span class="field-hint">Same as year built if never remodeled</span>
+          <span class="field-error">Valid range: 1950 to 2010</span>
+        </div>
+      </div>
+
+      <!-- SECTION 3: Size and Area -->
+      <div class="sh"><div class="sh-bar"></div><span class="sh-text">Size and Area</span><span class="sh-count">5 fields</span></div>
+      <div class="row3">
+        <div class="field">
+          <label for="Lot Area">Lot Area</label>
+          <input type="number" id="Lot Area" name="Lot Area" placeholder="e.g. 8500" min="1300" required value="{{ f_lot_area }}">
+          <span class="field-hint">Total lot size in sq ft</span>
+          <span class="field-error">Enter a valid lot area</span>
+        </div>
+        <div class="field">
+          <label for="Gr Liv Area">Above Ground Living Area</label>
+          <input type="number" id="Gr Liv Area" name="Gr Liv Area" placeholder="e.g. 1500" min="334" required value="{{ f_gr_liv_area }}">
+          <span class="field-hint">Gr Liv Area — sq ft</span>
+          <span class="field-error">Enter a valid area</span>
+        </div>
+        <div class="field">
+          <label for="1st Flr SF">1st Floor SF</label>
+          <input type="number" id="1st Flr SF" name="1st Flr SF" placeholder="e.g. 900" min="0" required value="{{ f_1st_flr_sf }}">
+          <span class="field-hint">sq ft</span>
+          <span class="field-error">Enter a valid area</span>
+        </div>
+        <div class="field">
+          <label for="2nd Flr SF">2nd Floor SF</label>
+          <input type="number" id="2nd Flr SF" name="2nd Flr SF" placeholder="e.g. 600" min="0" required value="{{ f_2nd_flr_sf }}">
+          <span class="field-hint">0 if single story</span>
+          <span class="field-error">Enter a valid area</span>
+        </div>
+        <div class="field">
+          <label for="Total Bsmt SF">Total Basement SF</label>
+          <input type="number" id="Total Bsmt SF" name="Total Bsmt SF" placeholder="e.g. 900" min="0" required value="{{ f_total_bsmt_sf }}">
+          <span class="field-hint">0 if no basement</span>
+          <span class="field-error">Enter a valid area</span>
+        </div>
+      </div>
+
+      <!-- SECTION 4: Basement -->
+      <div class="sh"><div class="sh-bar"></div><span class="sh-text">Basement</span><span class="sh-count">4 fields</span></div>
+      <div class="row4">
+        <div class="field">
+          <label>Basement Quality</label>
+          <div class="cs-wrapper" data-name="Bsmt Qual">
+            <select name="Bsmt Qual" required tabindex="-1">
+              <option value="">Select...</option>
+              <option value="None" {% if f_bsmt_qual == 'None' %}selected{% endif %}>None — No Basement</option>
+              <option value="Po"   {% if f_bsmt_qual == 'Po'   %}selected{% endif %}>Poor</option>
+              <option value="Fa"   {% if f_bsmt_qual == 'Fa'   %}selected{% endif %}>Fair</option>
+              <option value="TA"   {% if f_bsmt_qual == 'TA'   %}selected{% endif %}>Typical (80-89 in)</option>
+              <option value="Gd"   {% if f_bsmt_qual == 'Gd'   %}selected{% endif %}>Good (90-99 in)</option>
+              <option value="Ex"   {% if f_bsmt_qual == 'Ex'   %}selected{% endif %}>Excellent (100+ in)</option>
+            </select>
+            <div class="cs-trigger" tabindex="0"><span class="cs-label">Select...</span><svg class="cs-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cs-dropdown">
+              <div class="cs-option placeholder-opt" data-value="">Select...</div>
+              <div class="cs-option" data-value="None">None — No Basement</div>
+              <div class="cs-option" data-value="Po">Poor</div>
+              <div class="cs-option" data-value="Fa">Fair</div>
+              <div class="cs-option" data-value="TA">Typical (80-89 in)</div>
+              <div class="cs-option" data-value="Gd">Good (90-99 in)</div>
+              <div class="cs-option" data-value="Ex">Excellent (100+ in)</div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Basement Exposure</label>
+          <div class="cs-wrapper" data-name="Bsmt Exposure">
+            <select name="Bsmt Exposure" required tabindex="-1">
+              <option value="">Select...</option>
+              <option value="None" {% if f_bsmt_exposure == 'None' %}selected{% endif %}>None — No Basement</option>
+              <option value="No"   {% if f_bsmt_exposure == 'No'   %}selected{% endif %}>No Exposure</option>
+              <option value="Mn"   {% if f_bsmt_exposure == 'Mn'   %}selected{% endif %}>Minimal</option>
+              <option value="Av"   {% if f_bsmt_exposure == 'Av'   %}selected{% endif %}>Average</option>
+              <option value="Gd"   {% if f_bsmt_exposure == 'Gd'   %}selected{% endif %}>Good Exposure</option>
+            </select>
+            <div class="cs-trigger" tabindex="0"><span class="cs-label">Select...</span><svg class="cs-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cs-dropdown">
+              <div class="cs-option placeholder-opt" data-value="">Select...</div>
+              <div class="cs-option" data-value="None">None — No Basement</div>
+              <div class="cs-option" data-value="No">No Exposure</div>
+              <div class="cs-option" data-value="Mn">Minimal</div>
+              <div class="cs-option" data-value="Av">Average</div>
+              <div class="cs-option" data-value="Gd">Good Exposure</div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="Bsmt Full Bath">Basement Full Baths</label>
+          <input type="number" id="Bsmt Full Bath" name="Bsmt Full Bath" placeholder="e.g. 0" min="0" max="3" required value="{{ f_bsmt_full_bath }}">
+        </div>
+        <div class="field">
+          <label for="Bsmt Half Bath">Basement Half Baths</label>
+          <input type="number" id="Bsmt Half Bath" name="Bsmt Half Bath" placeholder="e.g. 0" min="0" max="2" required value="{{ f_bsmt_half_bath }}">
+        </div>
+      </div>
+
+      <!-- SECTION 5: Rooms and Bathrooms -->
+      <div class="sh"><div class="sh-bar"></div><span class="sh-text">Rooms and Bathrooms</span><span class="sh-count">5 fields</span></div>
+      <div class="row3">
+        <div class="field">
+          <label for="Full Bath">Full Bathrooms Above Ground</label>
+          <input type="number" id="Full Bath" name="Full Bath" placeholder="e.g. 2" min="0" max="4" required value="{{ f_full_bath }}">
+        </div>
+        <div class="field">
+          <label for="Half Bath">Half Bathrooms Above Ground</label>
+          <input type="number" id="Half Bath" name="Half Bath" placeholder="e.g. 1" min="0" max="2" required value="{{ f_half_bath }}">
+        </div>
+        <div class="field">
+          <label for="Bedroom AbvGr">Bedrooms Above Ground</label>
+          <input type="number" id="Bedroom AbvGr" name="Bedroom AbvGr" placeholder="e.g. 3" min="0" max="8" required value="{{ f_bedroom_abvgr }}">
+        </div>
+        <div class="field">
+          <label for="Kitchen AbvGr">Kitchens Above Ground</label>
+          <input type="number" id="Kitchen AbvGr" name="Kitchen AbvGr" placeholder="e.g. 1" min="0" max="3" required value="{{ f_kitchen_abvgr }}">
+          <span class="field-hint">Usually 1</span>
+        </div>
+        <div class="field">
+          <label for="Lot Frontage">Lot Frontage</label>
+          <input type="number" id="Lot Frontage" name="Lot Frontage" placeholder="e.g. 70" min="0" required value="{{ f_lot_frontage }}">
+          <span class="field-hint">Linear feet of street</span>
+        </div>
+      </div>
+
+      <!-- SECTION 6: Garage -->
+      <div class="sh"><div class="sh-bar"></div><span class="sh-text">Garage</span><span class="sh-count">3 fields</span></div>
+      <div class="row3">
+        <div class="field">
+          <label>Garage Type</label>
+          <div class="cs-wrapper" data-name="Garage Type">
+            <select name="Garage Type" required tabindex="-1">
+              <option value="">Select...</option>
+              <option value="Attchd"  {% if f_garage_type == 'Attchd'  %}selected{% endif %}>Attached to home</option>
+              <option value="Detchd"  {% if f_garage_type == 'Detchd'  %}selected{% endif %}>Detached from home</option>
+              <option value="BuiltIn" {% if f_garage_type == 'BuiltIn' %}selected{% endif %}>Built-In (part of house)</option>
+              <option value="CarPort" {% if f_garage_type == 'CarPort' %}selected{% endif %}>Car Port</option>
+              <option value="BasmntG" {% if f_garage_type == 'BasmntG' %}selected{% endif %}>Basement Garage</option>
+              <option value="2Types"  {% if f_garage_type == '2Types'  %}selected{% endif %}>More than one type</option>
+              <option value="None"    {% if f_garage_type == 'None'    %}selected{% endif %}>None — No Garage</option>
+            </select>
+            <div class="cs-trigger" tabindex="0"><span class="cs-label">Select...</span><svg class="cs-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cs-dropdown">
+              <div class="cs-option placeholder-opt" data-value="">Select...</div>
+              <div class="cs-option" data-value="Attchd">Attached to home</div>
+              <div class="cs-option" data-value="Detchd">Detached from home</div>
+              <div class="cs-option" data-value="BuiltIn">Built-In (part of house)</div>
+              <div class="cs-option" data-value="CarPort">Car Port</div>
+              <div class="cs-option" data-value="BasmntG">Basement Garage</div>
+              <div class="cs-option" data-value="2Types">More than one type</div>
+              <div class="cs-option" data-value="None">None — No Garage</div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="Garage Cars">Garage Car Capacity</label>
+          <input type="number" id="Garage Cars" name="Garage Cars" placeholder="e.g. 2" min="0" max="5" required value="{{ f_garage_cars }}">
+          <span class="field-hint">Number of cars</span>
+        </div>
+        <div class="field">
+          <label for="Garage Area">Garage Area</label>
+          <input type="number" id="Garage Area" name="Garage Area" placeholder="e.g. 480" min="0" required value="{{ f_garage_area }}">
+          <span class="field-hint">sq ft (0 if no garage)</span>
+        </div>
+      </div>
+
+      <!-- hidden constants -->
+      <input type="hidden" name="Street" value="Pave">
+      <input type="hidden" name="Utilities" value="AllPub">
+      <input type="hidden" name="Condition 2" value="Norm">
+      <input type="hidden" name="Roof Matl" value="CompShg">
+      <input type="hidden" name="Heating" value="GasA">
+      <input type="hidden" name="Low Qual Fin SF" value="0">
+      <input type="hidden" name="Misc Val" value="0">
+      <input type="hidden" name="3Ssn Porch" value="0">
+      <input type="hidden" name="Screen Porch" value="0">
+      <input type="hidden" name="Pool Area" value="0">
+
+      <!-- ACTION ROW + RESULT -->
+      <div class="action-row" id="action-anchor">
+        <button type="submit" class="btn-predict">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Estimate Price
+        </button>
+        <button type="button" class="btn-clear" id="clear-btn">Clear</button>
+
+        {% if predicted_price %}
+        <div class="result-bar show" id="result-bar">
+          <div class="rb-icon-block">
+            <div class="rb-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+            </div>
+          </div>
+          <div class="rb-divider"></div>
+          <div class="rb-price-block">
+            <div class="rb-price-eyebrow">Estimated Sale Price</div>
+            <div class="rb-price">${{ predicted_price }}</div>
+          </div>
+          <div class="rb-divider"></div>
+          <div class="rb-metrics">
+            <div class="rb-metric">
+              <span class="rb-metric-label">Model R2</span>
+              <span class="rb-metric-val">0.9315</span>
+            </div>
+            <div class="rb-metric">
+              <span class="rb-metric-label">Avg error (MAE)</span>
+              <span class="rb-metric-val">± $11,004</span>
+            </div>
+            <div class="rb-metric">
+              <span class="rb-metric-label">Algorithm</span>
+              <span class="rb-metric-val">Ridge (alpha=10)</span>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if request.POST.submitted and not predicted_price %}
+        <div class="result-bar show" id="result-bar" style="border-color: rgba(248,113,113,0.5); background: rgba(248,113,113,0.07);">
+          <div class="rb-left" style="grid-column: 1 / -1;">
+            <div class="rb-eyebrow" style="color: #f87171;">Incomplete Form</div>
+            <div style="color: var(--muted); margin-top: 6px; font-size: 0.85rem; line-height: 1.5;">
+              Please fill in all fields before running the prediction.
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+    </form>
+  </main>
+</div>
+</div>
+
+<script>
+(function () {
+
+  /* CUSTOM SELECT */
+  function initCustomSelects() {
+    document.querySelectorAll('.cs-wrapper').forEach(function (wrapper) {
+      const realSelect = wrapper.querySelector('select');
+      const trigger    = wrapper.querySelector('.cs-trigger');
+      const label      = wrapper.querySelector('.cs-label');
+      const options    = wrapper.querySelectorAll('.cs-option:not(.placeholder-opt)');
+
+      const pre = realSelect.value;
+      if (pre !== '') {
+        const match = wrapper.querySelector('.cs-option[data-value="' + CSS.escape(pre) + '"]');
+        if (match) {
+          label.textContent = match.textContent;
+          trigger.classList.add('has-value');
+          match.classList.add('selected');
+        }
+      }
+
+      trigger.addEventListener('click', function (e) {
+        e.stopPropagation();
+        const wasOpen = wrapper.classList.contains('open');
+        closeAll();
+        if (!wasOpen) {
+          wrapper.classList.add('open');
+          const parentField = wrapper.closest('.field');
+          const parentRow   = wrapper.closest('.row2, .row3, .row4');
+          if (parentField) parentField.classList.add('has-open-dropdown');
+          if (parentRow)   parentRow.classList.add('has-open-dropdown');
+        }
+      });
+      trigger.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); trigger.click(); }
+        if (e.key === 'Escape') closeAll();
+      });
+
+      options.forEach(function (opt) {
+        opt.addEventListener('click', function (e) {
+          e.stopPropagation();
+          realSelect.value = opt.getAttribute('data-value');
+          label.textContent = opt.textContent;
+          trigger.classList.add('has-value');
+          wrapper.querySelectorAll('.cs-option').forEach(o => o.classList.remove('selected'));
+          opt.classList.add('selected');
+          wrapper.classList.remove('open');
+          updateCounter();
+        });
+      });
+    });
+
+    document.addEventListener('click', closeAll);
+  }
+
+  function closeAll() {
+    document.querySelectorAll('.cs-wrapper.open').forEach(w => w.classList.remove('open'));
+    document.querySelectorAll('.has-open-dropdown').forEach(el => el.classList.remove('has-open-dropdown'));
+  }
+
+  /* COUNTER */
+  const form    = document.getElementById('ames-form');
+  const fillEl  = document.getElementById('fc-fill');
+  const countEl = document.getElementById('fc-count');
+  const TOTAL   = 29;
+
+  function updateCounter() {
+    let filled = 0;
+    form.querySelectorAll('input[type="number"]').forEach(el => {
+      if (el.value.trim() !== '') filled++;
+    });
+    form.querySelectorAll('.cs-wrapper select').forEach(el => {
+      if (el.value !== '') filled++;
+    });
+    filled = Math.min(filled, TOTAL);
+    fillEl.style.width = Math.round((filled / TOTAL) * 100) + '%';
+    countEl.textContent = filled + ' / ' + TOTAL;
+  }
+
+  form.addEventListener('input', updateCounter);
+
+  /* CLEAR */
+  document.getElementById('clear-btn').addEventListener('click', function () {
+    form.querySelectorAll('input[type="number"]').forEach(el => el.value = '');
+    document.querySelectorAll('.cs-wrapper').forEach(function (wrapper) {
+      wrapper.querySelector('select').value = '';
+      wrapper.querySelector('.cs-label').textContent = 'Select...';
+      wrapper.querySelector('.cs-trigger').classList.remove('has-value');
+      wrapper.querySelectorAll('.cs-option').forEach(o => o.classList.remove('selected'));
+    });
+    updateCounter();
+  });
+
+  /* SCROLL TO RESULT */
+  const resultBar = document.getElementById('result-bar');
+  if (resultBar) {
+    setTimeout(function () {
+      resultBar.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 120);
+  }
+
+  initCustomSelects();
+  updateCounter();
+
+  /* ENTER KEY: move focus instead of submitting */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && document.activeElement.tagName === 'INPUT') {
+      e.preventDefault();
+      const focusable = Array.from(document.querySelectorAll(
+        'input[type="number"], .cs-trigger, button'
+      )).filter(el => !el.disabled);
+      const idx = focusable.indexOf(document.activeElement);
+      if (idx > -1 && idx < focusable.length - 1) {
+        focusable[idx + 1].focus();
+      }
+    }
+  });
+
+})();
+</script>
+</body>
+</html>

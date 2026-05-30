@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Income Prediction - Zanevo</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:          #06090f;
+    --surface:     #0d1525;
+    --surface2:    #111f34;
+    --surface3:    #1a2438;
+    --border:      #1e2e48;
+    --border2:     #273d5e;
+    --text:        #f0f4ff;
+    --muted:       #9baabf;
+    --subtle:      #3a4a6b;
+    --ph:          #4a5a7a;
+    --accent:      #f59e0b;
+    --accent-dim:  rgba(245,158,11,0.12);
+    --accent-ring: rgba(245,158,11,0.22);
+    --success:     #4ade80;
+    --error:       #f87171;
+    --max-w:       1440px;
+    --pad:         clamp(1.5rem, 4vw, 4rem);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Space Grotesk', sans-serif; font-weight: 400;
+    min-height: 100vh; display: flex; flex-direction: column;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: radial-gradient(circle, rgba(30,50,90,0.45) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 90% 50% at 50% -10%, rgba(79,142,247,0.09) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 90% 80%,  rgba(155,110,245,0.06) 0%, transparent 55%);
+    pointer-events: none; z-index: 0;
+  }
+  * { position: relative; z-index: 1; }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 200;
+    background: rgba(6,9,15,0.92);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 var(--pad);
+    width: 100%;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 62px;
+  }
+  .logo {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800; font-size: 1.05rem;
+    color: var(--text); text-decoration: none; letter-spacing: -0.01em;
+  }
+  .logo em { font-style: normal; color: var(--accent); }
+  .nav-links { display: flex; align-items: center; gap: 10px; }
+  .nav-link {
+    font-size: 0.82rem; font-weight: 500; color: var(--muted);
+    text-decoration: none; padding: 6px 14px; border-radius: 6px;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; gap: 7px;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+  }
+  .nav-link:hover { color: var(--text); background: var(--surface); border-color: var(--border2); }
+  .nav-link svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+  /* SHELL */
+  .shell { display: grid; grid-template-columns: 300px 1fr; flex: 1; }
+
+  /* SIDEBAR */
+  .sidebar { border-right: 1px solid var(--border); padding: 36px 28px; position: sticky; top: 62px; height: calc(100vh - 62px); overflow-y: auto; display: flex; flex-direction: column; }
+  .sidebar::-webkit-scrollbar { width: 0; }
+
+  .model-badge { display: inline-flex; align-items: center; gap: 7px; background: var(--accent-dim); border: 1px solid rgba(245,158,11,0.28); color: var(--accent); font-size: 0.65rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 5px 11px; border-radius: 4px; width: fit-content; margin-bottom: 20px; }
+  .badge-dot { width: 5px; height: 5px; background: var(--accent); border-radius: 50%; animation: blink 2s infinite; flex-shrink: 0; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  .sidebar-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.55rem; line-height: 1.1; letter-spacing: -0.02em; color: var(--text); margin-bottom: 12px; }
+  .sidebar-title span { color: var(--accent); display: block; }
+  .sidebar-desc { font-size: 0.875rem; color: var(--muted); line-height: 1.72; margin-bottom: 20px; }
+
+  .computed-note { background: var(--accent-dim); border: 1px solid rgba(245,158,11,0.18); border-radius: 8px; padding: 12px 14px; margin-bottom: 24px; }
+  .computed-note strong { display: block; font-size: 0.62rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+  .computed-note p { font-size: 0.79rem; color: var(--muted); line-height: 1.6; }
+
+  .field-counter { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 24px; }
+  .fc-track { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .fc-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s ease; width: 0%; }
+  .fc-label { font-size: 0.72rem; color: var(--muted); white-space: nowrap; font-family: 'Syne', sans-serif; font-weight: 700; }
+  .fc-count { font-size: 0.72rem; color: var(--accent); font-family: 'Syne', sans-serif; font-weight: 700; min-width: 32px; text-align: right; }
+
+  .sidebar-signals { }
+  .signals-title { font-size: 0.63rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--subtle); margin-bottom: 12px; }
+  .signal-item { display: flex; align-items: flex-start; gap: 9px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 0.81rem; color: var(--muted); line-height: 1.45; }
+  .signal-item:last-child { border-bottom: none; }
+  .signal-dot { width: 5px; height: 5px; background: var(--accent); border-radius: 50%; flex-shrink: 0; margin-top: 6px; opacity: 0.55; }
+
+  /* FORM AREA */
+  .form-area { padding: 36px 48px 64px; max-width: calc(var(--max-w) - 300px); }
+
+  .disclaimer { display: flex; align-items: center; gap: 10px; padding: 11px 16px; margin-bottom: 32px; background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.18); border-radius: 7px; font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+  .disclaimer svg { width: 14px; height: 14px; color: var(--accent); flex-shrink: 0; }
+
+  .sh { display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--border); margin-bottom: 22px; margin-top: 32px; }
+  .sh:first-of-type { margin-top: 0; }
+  .sh-bar { width: 3px; height: 13px; background: var(--accent); border-radius: 2px; flex-shrink: 0; }
+  .sh-text { font-size: 0.67rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); flex: 1; }
+  .sh-count { font-size: 0.67rem; font-family: 'Syne', sans-serif; color: var(--subtle); }
+
+  .row2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 18px; margin-bottom: 18px; }
+  .row3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; margin-bottom: 18px; }
+  .row4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 18px; margin-bottom: 18px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  label { font-size: 0.81rem; font-weight: 500; color: var(--muted); letter-spacing: 0.01em; cursor: pointer; }
+
+  /* NUMBER INPUTS */
+  input[type="number"] {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 0.92rem; font-weight: 400;
+    padding: 11px 13px; width: 100%; outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    -webkit-appearance: none; appearance: none;
+  }
+  input[type="number"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-ring); background: #181f32; }
+  input[type="number"]:not(:placeholder-shown) { border-color: rgba(245,158,11,0.35); }
+  input[type="number"]::placeholder { color: var(--ph); }
+  .field-hint { font-size: 0.72rem; color: var(--subtle); margin-top: -2px; }
+  .field-error { display: none; font-size: 0.72rem; color: var(--error); margin-top: -2px; }
+  input:invalid:not(:focus):not(:placeholder-shown) { border-color: var(--error); box-shadow: 0 0 0 3px rgba(248,113,113,0.12); }
+  input:invalid:not(:focus):not(:placeholder-shown) ~ .field-error { display: block; }
+
+  /* CUSTOM SELECT */
+  .cs-wrapper {
+    position: relative;
+    user-select: none;
+    z-index: 1;
+  }
+  .cs-wrapper.open {
+    z-index: 400;
+  }
+  .field.has-open-dropdown {
+    z-index: 500 !important;
+  }
+  .row2.has-open-dropdown,
+  .row3.has-open-dropdown,
+  .row4.has-open-dropdown {
+    z-index: 500 !important;
+  }
+  .cs-wrapper select { position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0; }
+
+  .cs-trigger {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 7px; padding: 11px 13px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.92rem; font-weight: 400;
+    color: var(--ph); cursor: pointer; min-height: 44px;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  }
+  .cs-trigger.has-value { color: var(--text); border-color: rgba(245,158,11,0.35); }
+  .cs-wrapper.open .cs-trigger { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-ring); background: #181f32; }
+
+  .cs-arrow { flex-shrink: 0; margin-left: 8px; transition: transform 0.2s; color: var(--muted); }
+  .cs-wrapper.open .cs-arrow { transform: rotate(180deg); }
+
+  .cs-dropdown {
+    display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: var(--surface3); border: 1px solid var(--border);
+    border-radius: 8px; z-index: 300; overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+    max-height: 220px; overflow-y: auto;
+  }
+  .cs-dropdown::-webkit-scrollbar { width: 4px; }
+  .cs-dropdown::-webkit-scrollbar-track { background: var(--surface3); }
+  .cs-dropdown::-webkit-scrollbar-thumb { background: var(--subtle); border-radius: 2px; }
+  .cs-wrapper.open .cs-dropdown { display: block; }
+
+  .cs-option {
+    padding: 11px 14px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 400;
+    color: var(--muted); cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+    border-bottom: 1px solid var(--border);
+  }
+  .cs-option:last-child { border-bottom: none; }
+  .cs-option.placeholder-opt { color: var(--ph); font-size: 0.85rem; cursor: default; }
+  .cs-option:not(.placeholder-opt):hover { background: rgba(245,158,11,0.12); color: var(--text); }
+  .cs-option.selected { background: rgba(245,158,11,0.18); color: var(--text); font-weight: 500; }
+
+  /* ACTION ROW */
+  .action-row {
+    display: flex; align-items: center; gap: 12px;
+    margin-top: 36px; padding-top: 28px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .btn-predict {
+    background: var(--accent); color: #fff; border: none; border-radius: 8px;
+    padding: 12px 28px; font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: 0.88rem; letter-spacing: 0.04em; cursor: pointer;
+    transition: opacity 0.15s, transform 0.12s, box-shadow 0.15s;
+    box-shadow: 0 3px 16px rgba(245,158,11,0.28);
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  }
+  .btn-predict svg { width: 14px; height: 14px; flex-shrink: 0; }
+  .btn-predict:hover { opacity: 0.88; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(245,158,11,0.38); }
+  .btn-predict:active { transform: translateY(0); }
+  .btn-clear {
+    background: transparent; color: var(--muted);
+    border: 1px solid rgba(255,255,255,0.10); border-radius: 8px;
+    padding: 12px 22px; font-family: 'DM Sans', sans-serif; font-weight: 500;
+    font-size: 0.88rem; cursor: pointer; flex-shrink: 0;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .btn-clear:hover { color: var(--text); border-color: var(--subtle); }
+
+  /* RESULT BAR */
+  .result-bar {
+    display: none; flex: 1; min-width: 280px;
+    border-radius: 9px; border: 1px solid;
+    padding: 14px 20px;
+    grid-template-columns: 1fr 1px 1fr;
+    align-items: center; gap: 20px;
+    animation: fadeUp 0.35s ease both;
+  }
+  .result-bar.show { display: grid; }
+  .result-bar.high  { background: rgba(74,222,128,0.07); border-color: rgba(74,222,128,0.25); }
+  .result-bar.low   { background: rgba(248,113,113,0.07); border-color: rgba(248,113,113,0.25); }
+
+  .rb-eyebrow { font-size: 0.6rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+  .rb-conf-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+  .rb-conf-label { font-size: 0.78rem; color: var(--muted); }
+  .rb-conf-val { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem; }
+  .result-bar.high .rb-conf-val { color: var(--success); }
+  .result-bar.low  .rb-conf-val { color: var(--error); }
+  .rb-track { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .rb-fill { height: 100%; border-radius: 2px; }
+  .result-bar.high .rb-fill { background: var(--success); }
+  .result-bar.low  .rb-fill { background: var(--error); }
+
+  .rb-divider { background: var(--border); align-self: stretch; }
+
+  .rb-right { display: flex; align-items: center; gap: 12px; }
+  .rb-icon { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .result-bar.high .rb-icon { background: rgba(74,222,128,0.14); }
+  .result-bar.low  .rb-icon { background: rgba(248,113,113,0.14); }
+  .rb-icon svg { width: 16px; height: 16px; }
+  .result-bar.high .rb-icon svg { color: var(--success); }
+  .result-bar.low  .rb-icon svg { color: var(--error); }
+  .rb-verdict-label { font-size: 0.6rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .rb-verdict-value { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem; }
+  .result-bar.high .rb-verdict-value { color: var(--success); }
+  .result-bar.low  .rb-verdict-value { color: var(--error); }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+  /* RESPONSIVE */
+  @media (max-width: 960px) {
+    .shell { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); padding: 28px 24px; }
+    .form-area { padding: 28px 24px 56px; max-width: 100%; }
+    .result-bar { grid-template-columns: 1fr; min-width: 100%; }
+    .rb-divider { display: none; }
+  }
+  @media (max-width: 640px) { .row2, .row3, .row4 { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 420px) { .row2, .row3, .row4 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="logo">Zanevo<em>.</em></a>
+    <div class="nav-links">
+      <a href="/#models" class="nav-link">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Models
+      </a>
+      <a href="/#methodology" class="nav-link">
+        <svg viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/></svg>
+        Methodology
+      </a>
+      <a href="/" class="nav-link">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home
+      </a>
+    </div>
+  </div>
+</nav>
+
+<div style="max-width:var(--max-w);margin:0 auto;width:100%;display:flex;flex:1;">
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="model-badge"><span class="badge-dot"></span> XGBoost</div>
+    <h1 class="sidebar-title">Income Bracket<span>Prediction</span></h1>
+    <p class="sidebar-desc">Predict whether an individual earns above or below $50K per year, based on 1994 US Census demographic and employment data.</p>
+
+    <div class="computed-note">
+      <strong>Auto-computed features</strong>
+      <p>age_edu (age x education level) and has_capital (any capital activity flag) are derived from your inputs. fnlwgt and race are set to dataset defaults.</p>
+    </div>
+
+    <div class="field-counter">
+      <span class="fc-label">Fields filled</span>
+      <div class="fc-track"><div class="fc-fill" id="fc-fill"></div></div>
+      <span class="fc-count" id="fc-count">0 / 11</span>
+    </div>
+
+    <div class="sidebar-signals">
+      <div class="signals-title">What the model evaluates</div>
+      <div class="signal-item"><span class="signal-dot"></span>Relationship status and marital status as the strongest income predictors in this dataset</div>
+      <div class="signal-item"><span class="signal-dot"></span>Education level combined with age as a proxy for career stage</div>
+      <div class="signal-item"><span class="signal-dot"></span>Capital gains and losses as an investor activity signal</div>
+      <div class="signal-item"><span class="signal-dot"></span>Occupation and hours worked per week as direct earning capacity signals</div>
+    </div>
+  </aside>
+
+  <!-- FORM -->
+  <main class="form-area">
+    <form method="POST" id="census-form" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="submitted" value="1">
+
+      <div class="disclaimer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Based on 1994 US Census data. Predictions reflect historical income patterns and are not applicable to current labor markets.
+      </div>
+
+      <!-- SECTION 1: Personal Profile -->
+      <div class="sh"><div class="sh-bar"></div><span class="sh-text">Personal Profile</span><span class="sh-count">4 fields</span></div>
+      <div class="row2">
+        <div class="field">
+          <label for="age">Age</label>
+          <input type="number" id="age" name="age" placeholder="e.g. 38" min="17" max="90" required value="{{ pv.age }}">
+          <span class="field-error">Valid range: 17 to 90</span>
+        </div>
+        <div class="field">
+          <label>Sex</label>
+          <div class="cs-wrapper" data-name="sex">
+            <select name="sex" required tabindex="-1">
+              <option value="">Select...</option>
+              <option value="1" {% if pv.sex == '1' %}selected{% endif %}>Male</option>
+              <option value="0" {% if pv.sex == '0' %}selected{% endif %}>Female</option>
+            </select>
+            <div class="cs-trigger" tabindex="0"><span class="cs-label">Select...</span><svg class="cs-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cs-dropdown">
+              <div class="cs-option placeholder-opt" data-value="">Select...</div>
+              <div class="cs-option" data-value="1">Male</div>
+              <div class="cs-option" data-value="0">Female</div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Marital Status</label>
+          <div class="cs-wrapper" data-name="marital.status">
+            <select name="marital.status" required tabindex="-1">
+              <option value="">Select...</option>
+              <option value="1" {% if pv.marital == '1' %}selected{% endif %}>Married</option>
+              <option value="0" {% if pv.marital == '0' %}selected{% endif %}>Not Married (single, divorced, widowed, separated)</option>
+            </select>
+            <div class="cs-trigger" tabindex="0"><span class="cs-label">Select...</span><svg class="cs-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cs-dropdown">
+              <div class="cs-option placeholder-opt" data-value="">Select...</div>
+              <div class="cs-option" data-value="1">Married</div>
+              <div class="cs-option" data-value="0">Not Married (single, divorced, widowed, separated)</div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Relationship in Household</label>
+          <div class="cs-wrapper" data-name="relationship">
+            <select name="relationship" required tabindex="-1">
+              <option value="">Select...</option>
+              <option value="Husband"        {% if pv.relationship == 'Husband'        %}selected{% endif %}>Husband</option>
+              <option value="Wife"           {% if pv.relationship == 'Wife'           %}selected{% endif %}>Wife</option>
+              <option value="Own-child"      {% if pv.relationship == 'Own-child'      %}selected{% endif %}>Own Child</option>
+              <option value="Not-in-family"  {% if pv.relationship == 'Not-in-family'  %}selected{% endif %}>Not in Family</option>
+              <option value="Other-relative" {% if pv.relationship == 'Other-relative' %}selected{% endif %}>Other Relative</option>
+              <option value="Unmarried"      {% if pv.relationship == 'Unmarried'      %}selected{% endif %}>Unmarried</option>
+            </select>
+            <div class="cs-trigger" tabindex="0"><span class="cs-label">Select...</span><svg class="cs-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cs-dropdown">
+              <div class="cs-option placeholder-opt" data-value="">Select...</div>
+              <div class="cs-option" data-value="Husband">Husband</div>
+              <div class="cs-option" data-value="Wife">Wife</div>
+              <div class="cs-option" data-value="Own-child">Own Child</div>
+              <div class="cs-option" data-value="Not-in-family">Not in Family</div>
+              <div class="cs-option" data-value="Other-relative">Other Relative</div>
+              <div class="cs-option" data-value="Unmarried">Unmarried</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 2: Education and Employment -->
+      <div class="sh"><div class="sh-bar"></div><span class="sh-text">Education and Employment</span><span class="sh-count">4 fields</span></div>
+      <div class="row2">
+        <div class="field">
+          <label>Education Level</label>
+          <div class="cs-wrapper" data-name="education.num">
+            <select name="education.num" required tabindex="-1">
+              <option value="">Select...</option>
+              <option value="1"  {% if pv.education_num == '1'  %}selected{% endif %}>1 — Preschool</option>
+              <option value="2"  {% if pv.education_num == '2'  %}selected{% endif %}>2 — 1st to 4th grade</option>
+              <option value="3"  {% if pv.education_num == '3'  %}selected{% endif %}>3 — 5th to 6th grade</option>
+              <option value="4"  {% if pv.education_num == '4'  %}selected{% endif %}>4 — 7th to 8th grade</option>
+              <option value="5"  {% if pv.education_num == '5'  %}selected{% endif %}>5 — 9th grade</option>
+              <option value="6"  {% if pv.education_num == '6'  %}selected{% endif %}>6 — 10th grade</option>
+              <option value="7"  {% if pv.education_num == '7'  %}selected{% endif %}>7 — 11th grade</option>
+              <option value="8"  {% if pv.education_num == '8'  %}selected{% endif %}>8 — 12th grade (no diploma)</option>
+              <option value="9"  {% if pv.education_num == '9'  %}selected{% endif %}>9 — High School Graduate</option>
+              <option value="10" {% if pv.education_num == '10' %}selected{% endif %}>10 — Some College</option>
+              <option value="11" {% if pv.education_num == '11' %}selected{% endif %}>11 — Associate (vocational)</option>
+              <option value="12" {% if pv.education_num == '12' %}selected{% endif %}>12 — Associate (academic)</option>
+              <option value="13" {% if pv.education_num == '13' %}selected{% endif %}>13 — Bachelor's Degree</option>
+              <option value="14" {% if pv.education_num == '14' %}selected{% endif %}>14 — Master's Degree</option>
+              <option value="15" {% if pv.education_num == '15' %}selected{% endif %}>15 — Professional School</option>
+              <option value="16" {% if pv.education_num == '16' %}selected{% endif %}>16 — Doctorate</option>
+            </select>
+            <div class="cs-trigger" tabindex="0"><span class="cs-label">Select...</span><svg class="cs-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cs-dropdown">
+              <div class="cs-option placeholder-opt" data-value="">Select...</div>
+              <div class="cs-option" data-value="1">1 — Preschool</div>
+              <div class="cs-option" data-value="2">2 — 1st to 4th grade</div>
+              <div class="cs-option" data-value="3">3 — 5th to 6th grade</div>
+              <div class="cs-option" data-value="4">4 — 7th to 8th grade</div>
+              <div class="cs-option" data-value="5">5 — 9th grade</div>
+              <div class="cs-option" data-value="6">6 — 10th grade</div>
+              <div class="cs-option" data-value="7">7 — 11th grade</div>
+              <div class="cs-option" data-value="8">8 — 12th grade (no diploma)</div>
+              <div class="cs-option" data-value="9">9 — High School Graduate</div>
+              <div class="cs-option" data-value="10">10 — Some College</div>
+              <div class="cs-option" data-value="11">11 — Associate (vocational)</div>
+              <div class="cs-option" data-value="12">12 — Associate (academic)</div>
+              <div class="cs-option" data-value="13">13 — Bachelor's Degree</div>
+              <div class="cs-option" data-value="14">14 — Master's Degree</div>
+              <div class="cs-option" data-value="15">15 — Professional School</div>
+              <div class="cs-option" data-value="16">16 — Doctorate</div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Work Class</label>
+          <div class="cs-wrapper" data-name="workclass">
+            <select name="workclass" required tabindex="-1">
+              <option value="">Select...</option>
+              <option value="Private"         {% if pv.workclass == 'Private'         %}selected{% endif %}>Private</option>
+              <option value="Self-emp-not-inc" {% if pv.workclass == 'Self-emp-not-inc' %}selected{% endif %}>Self Employed (not incorporated)</option>
+              <option value="Self-emp-inc"    {% if pv.workclass == 'Self-emp-inc'    %}selected{% endif %}>Self Employed (incorporated)</option>
+              <option value="Federal-gov"     {% if pv.workclass == 'Federal-gov'     %}selected{% endif %}>Federal Government</option>
+              <option value="Local-gov"       {% if pv.workclass == 'Local-gov'       %}selected{% endif %}>Local Government</option>
+              <option value="State-gov"       {% if pv.workclass == 'State-gov'       %}selected{% endif %}>State Government</option>
+              <option value="Without-pay"     {% if pv.workclass == 'Without-pay'     %}selected{% endif %}>Without Pay</option>
+            </select>
+            <div class="cs-trigger" tabindex="0"><span class="cs-label">Select...</span><svg class="cs-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cs-dropdown">
+              <div class="cs-option placeholder-opt" data-value="">Select...</div>
+              <div class="cs-option" data-value="Private">Private</div>
+              <div class="cs-option" data-value="Self-emp-not-inc">Self Employed (not incorporated)</div>
+              <div class="cs-option" data-value="Self-emp-inc">Self Employed (incorporated)</div>
+              <div class="cs-option" data-value="Federal-gov">Federal Government</div>
+              <div class="cs-option" data-value="Local-gov">Local Government</div>
+              <div class="cs-option" data-value="State-gov">State Government</div>
+              <div class="cs-option" data-value="Without-pay">Without Pay</div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Occupation</label>
+          <div class="cs-wrapper" data-name="occupation">
+            <select name="occupation" required tabindex="-1">
+              <option value="">Select...</option>
+              <option value="Prof-specialty"    {% if pv.occupation == 'Prof-specialty'    %}selected{% endif %}>Professional Specialty</option>
+              <option value="Exec-managerial"   {% if pv.occupation == 'Exec-managerial'   %}selected{% endif %}>Executive / Managerial</option>
+              <option value="Tech-support"      {% if pv.occupation == 'Tech-support'      %}selected{% endif %}>Tech Support</option>
+              <option value="Sales"             {% if pv.occupation == 'Sales'             %}selected{% endif %}>Sales</option>
+              <option value="Adm-clerical"      {% if pv.occupation == 'Adm-clerical'      %}selected{% endif %}>Admin / Clerical</option>
+              <option value="Craft-repair"      {% if pv.occupation == 'Craft-repair'      %}selected{% endif %}>Craft / Repair</option>
+              <option value="Transport-moving"  {% if pv.occupation == 'Transport-moving'  %}selected{% endif %}>Transport / Moving</option>
+              <option value="Machine-op-inspct" {% if pv.occupation == 'Machine-op-inspct' %}selected{% endif %}>Machine Operator / Inspector</option>
+              <option value="Handlers-cleaners" {% if pv.occupation == 'Handlers-cleaners' %}selected{% endif %}>Handlers / Cleaners</option>
+              <option value="Farming-fishing"   {% if pv.occupation == 'Farming-fishing'   %}selected{% endif %}>Farming / Fishing</option>
+              <option value="Protective-serv"   {% if pv.occupation == 'Protective-serv'   %}selected{% endif %}>Protective Services</option>
+              <option value="Priv-house-serv"   {% if pv.occupation == 'Priv-house-serv'   %}selected{% endif %}>Private House Services</option>
+              <option value="Other-service"     {% if pv.occupation == 'Other-service'     %}selected{% endif %}>Other Services</option>
+              <option value="Armed-Forces"      {% if pv.occupation == 'Armed-Forces'      %}selected{% endif %}>Armed Forces</option>
+            </select>
+            <div class="cs-trigger" tabindex="0"><span class="cs-label">Select...</span><svg class="cs-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cs-dropdown">
+              <div class="cs-option placeholder-opt" data-value="">Select...</div>
+              <div class="cs-option" data-value="Prof-specialty">Professional Specialty</div>
+              <div class="cs-option" data-value="Exec-managerial">Executive / Managerial</div>
+              <div class="cs-option" data-value="Tech-support">Tech Support</div>
+              <div class="cs-option" data-value="Sales">Sales</div>
+              <div class="cs-option" data-value="Adm-clerical">Admin / Clerical</div>
+              <div class="cs-option" data-value="Craft-repair">Craft / Repair</div>
+              <div class="cs-option" data-value="Transport-moving">Transport / Moving</div>
+              <div class="cs-option" data-value="Machine-op-inspct">Machine Operator / Inspector</div>
+              <div class="cs-option" data-value="Handlers-cleaners">Handlers / Cleaners</div>
+              <div class="cs-option" data-value="Farming-fishing">Farming / Fishing</div>
+              <div class="cs-option" data-value="Protective-serv">Protective Services</div>
+              <div class="cs-option" data-value="Priv-house-serv">Private House Services</div>
+              <div class="cs-option" data-value="Other-service">Other Services</div>
+              <div class="cs-option" data-value="Armed-Forces">Armed Forces</div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="hours.per.week">Hours per Week</label>
+          <input type="number" id="hours.per.week" name="hours.per.week" placeholder="e.g. 40" min="1" max="99" required value="{{ pv.hours }}">
+          <span class="field-hint">Typical working hours per week</span>
+          <span class="field-error">Valid range: 1 to 99</span>
+        </div>
+      </div>
+
+      <!-- SECTION 3: Financials -->
+      <div class="sh"><div class="sh-bar"></div><span class="sh-text">Financial Activity</span><span class="sh-count">3 fields</span></div>
+      <div class="row3">
+        <div class="field">
+          <label for="capital.gain">Capital Gain</label>
+          <input type="number" id="capital.gain" name="capital.gain" placeholder="e.g. 0" min="0" required value="{{ pv.capital_gain }}">
+          <span class="field-hint">Investment profit this year (0 if none)</span>
+          <span class="field-error">Enter 0 or a positive value</span>
+        </div>
+        <div class="field">
+          <label for="capital.loss">Capital Loss</label>
+          <input type="number" id="capital.loss" name="capital.loss" placeholder="e.g. 0" min="0" required value="{{ pv.capital_loss }}">
+          <span class="field-hint">Investment loss this year (0 if none)</span>
+          <span class="field-error">Enter 0 or a positive value</span>
+        </div>
+        <div class="field">
+          <label>Native Country / Region</label>
+          <div class="cs-wrapper" data-name="native.country">
+            <select name="native.country" required tabindex="-1">
+              <option value="">Select...</option>
+              <option value="USA"          {% if pv.native == 'USA'          %}selected{% endif %}>United States</option>
+              <option value="Latin-America" {% if pv.native == 'Latin-America' %}selected{% endif %}>Latin America</option>
+              <option value="Europe"       {% if pv.native == 'Europe'       %}selected{% endif %}>Europe</option>
+              <option value="Asia"         {% if pv.native == 'Asia'         %}selected{% endif %}>Asia</option>
+              <option value="Other"        {% if pv.native == 'Other'        %}selected{% endif %}>Other (Canada, South, Outlying US territories)</option>
+            </select>
+            <div class="cs-trigger" tabindex="0"><span class="cs-label">Select...</span><svg class="cs-arrow" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <div class="cs-dropdown">
+              <div class="cs-option placeholder-opt" data-value="">Select...</div>
+              <div class="cs-option" data-value="USA">United States</div>
+              <div class="cs-option" data-value="Latin-America">Latin America</div>
+              <div class="cs-option" data-value="Europe">Europe</div>
+              <div class="cs-option" data-value="Asia">Asia</div>
+              <div class="cs-option" data-value="Other">Other (Canada, South, Outlying US territories)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- hidden defaults -->
+      <input type="hidden" name="fnlwgt" value="189778">
+      <input type="hidden" name="race" value="White">
+
+      <!-- ACTION ROW + INLINE RESULT -->
+      <div class="action-row" id="action-anchor">
+        <button type="submit" class="btn-predict">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Predict Income
+        </button>
+        <button type="button" class="btn-clear" id="clear-btn">Clear</button>
+
+        {% if result %}
+        <div class="result-bar show {% if result == 'Income > $50K' %}high{% else %}low{% endif %}" id="result-bar">
+          <div class="rb-left">
+            <div class="rb-eyebrow">Model Confidence</div>
+            <div class="rb-conf-row">
+              <span class="rb-conf-label">Confidence score</span>
+              <span class="rb-conf-val">{{ probability }}%</span>
+            </div>
+            <div class="rb-track"><div class="rb-fill" style="width:{{ probability }}%"></div></div>
+          </div>
+          <div class="rb-divider"></div>
+          <div class="rb-right">
+            <div class="rb-icon">
+              {% if result == 'Income > $50K' %}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              {% else %}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+              {% endif %}
+            </div>
+            <div>
+              <div class="rb-verdict-label">Income Bracket</div>
+              <div class="rb-verdict-value">{{ result }}</div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if request.POST.submitted and not result %}
+        <div class="result-bar show" id="result-bar" style="border-color: rgba(248,113,113,0.5); background: rgba(248,113,113,0.07);">
+          <div class="rb-left" style="grid-column: 1 / -1;">
+            <div class="rb-eyebrow" style="color: #f87171;">Incomplete Form</div>
+            <div style="color: var(--muted); margin-top: 6px; font-size: 0.85rem; line-height: 1.5;">
+              Please fill in all fields before running the prediction.
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+    </form>
+  </main>
+</div>
+</div>
+
+<script>
+(function () {
+
+  /* CUSTOM SELECT */
+  function initCustomSelects() {
+    document.querySelectorAll('.cs-wrapper').forEach(function (wrapper) {
+      const realSelect = wrapper.querySelector('select');
+      const trigger    = wrapper.querySelector('.cs-trigger');
+      const label      = wrapper.querySelector('.cs-label');
+      const options    = wrapper.querySelectorAll('.cs-option:not(.placeholder-opt)');
+
+      const pre = realSelect.value;
+      if (pre !== '') {
+        const match = wrapper.querySelector('.cs-option[data-value="' + pre + '"]');
+        if (match) {
+          label.textContent = match.textContent;
+          trigger.classList.add('has-value');
+          match.classList.add('selected');
+        }
+      }
+
+      trigger.addEventListener('click', function (e) {
+        e.stopPropagation();
+        const wasOpen = wrapper.classList.contains('open');
+        closeAll();
+        if (!wasOpen) {
+          wrapper.classList.add('open');
+          const parentField = wrapper.closest('.field');
+          const parentRow   = wrapper.closest('.row2, .row3, .row4');
+          if (parentField) parentField.classList.add('has-open-dropdown');
+          if (parentRow)   parentRow.classList.add('has-open-dropdown');
+        }
+      });
+      trigger.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); trigger.click(); }
+        if (e.key === 'Escape') closeAll();
+      });
+
+      options.forEach(function (opt) {
+        opt.addEventListener('click', function (e) {
+          e.stopPropagation();
+          realSelect.value = opt.getAttribute('data-value');
+          label.textContent = opt.textContent;
+          trigger.classList.add('has-value');
+          wrapper.querySelectorAll('.cs-option').forEach(o => o.classList.remove('selected'));
+          opt.classList.add('selected');
+          wrapper.classList.remove('open');
+          updateCounter();
+        });
+      });
+    });
+
+    document.addEventListener('click', closeAll);
+  }
+
+  function closeAll() {
+    document.querySelectorAll('.cs-wrapper.open').forEach(w => w.classList.remove('open'));
+    document.querySelectorAll('.has-open-dropdown').forEach(el => el.classList.remove('has-open-dropdown'));
+  }
+
+  /* COUNTER */
+  const form    = document.getElementById('census-form');
+  const fillEl  = document.getElementById('fc-fill');
+  const countEl = document.getElementById('fc-count');
+  const TOTAL   = 11;
+
+  function updateCounter() {
+    let filled = 0;
+    form.querySelectorAll('input[type="number"]').forEach(el => {
+      if (el.value.trim() !== '') filled++;
+    });
+    form.querySelectorAll('.cs-wrapper select').forEach(el => {
+      if (el.value !== '') filled++;
+    });
+    filled = Math.min(filled, TOTAL);
+    fillEl.style.width = Math.round((filled / TOTAL) * 100) + '%';
+    countEl.textContent = filled + ' / ' + TOTAL;
+  }
+
+  form.addEventListener('input', updateCounter);
+
+  /* CLEAR */
+  document.getElementById('clear-btn').addEventListener('click', function () {
+    form.querySelectorAll('input[type="number"]').forEach(el => el.value = '');
+    document.querySelectorAll('.cs-wrapper').forEach(function (wrapper) {
+      wrapper.querySelector('select').value = '';
+      wrapper.querySelector('.cs-label').textContent = 'Select...';
+      wrapper.querySelector('.cs-trigger').classList.remove('has-value');
+      wrapper.querySelectorAll('.cs-option').forEach(o => o.classList.remove('selected'));
+    });
+    updateCounter();
+  });
+
+  /* SCROLL TO RESULT */
+  const resultBar = document.getElementById('result-bar');
+  if (resultBar) {
+    setTimeout(function () {
+      resultBar.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 120);
+  }
+
+  initCustomSelects();
+  updateCounter();
+
+  /* ENTER KEY: move focus instead of submitting */
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && document.activeElement.tagName === 'INPUT') {
+      e.preventDefault();
+      const focusable = Array.from(document.querySelectorAll(
+        'input[type="number"], .cs-trigger, button'
+      )).filter(el => !el.disabled);
+      const idx = focusable.indexOf(document.activeElement);
+      if (idx > -1 && idx < focusable.length - 1) {
+        focusable[idx + 1].focus();
+      }
+    }
+  });
+
+})();
+</script>
+</body>
+</html>

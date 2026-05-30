@@ -1,0 +1,10 @@
+django==5.2.14
+gunicorn==26.0.0
+whitenoise==6.12.0
+python-dotenv==1.2.2
+pandas==2.3.3
+numpy==2.2.6
+scikit-learn==1.7.2
+xgboost
+joblib
+scipy==1.15.2
