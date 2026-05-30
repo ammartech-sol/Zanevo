@@ -30,5 +30,3 @@ Thumbs.db
 .vscode/
 .idea/
 
-# ML model files (large binary files)
-ml_models/
