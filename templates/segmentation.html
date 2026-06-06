@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='82' x='50' text-anchor='middle' font-size='82' font-weight='900' fill='%236c63ff' font-family='Arial,sans-serif'>Z</text></svg>">
 <title>Customer Segmentation - Zanevo</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -541,6 +542,41 @@
   });
 
   updateCounter();
+
+  /* DATE FUTURE VALIDATION */
+  form.addEventListener('submit', function (e) {
+    const dateInput = form.querySelector('input[type="date"]');
+    const errorId   = 'date-future-error';
+    const existing  = document.getElementById(errorId);
+
+    if (existing) existing.remove();
+    dateInput.style.borderColor = '';
+    dateInput.style.boxShadow   = '';
+
+    if (dateInput.value) {
+      const selected = new Date(dateInput.value);
+      const today    = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (selected > today) {
+        e.preventDefault();
+        const err = document.createElement('span');
+        err.id          = errorId;
+        err.textContent = 'Date cannot be in the future';
+        err.style.cssText = 'color: var(--error); font-size: 0.75rem; margin-top: 4px; display: block;';
+        dateInput.parentElement.appendChild(err);
+        dateInput.style.borderColor = 'var(--error)';
+        dateInput.style.boxShadow   = '0 0 0 3px rgba(248,113,113,0.18)';
+
+        dateInput.addEventListener('change', function () {
+          const e2 = document.getElementById(errorId);
+          if (e2) e2.remove();
+          dateInput.style.borderColor = '';
+          dateInput.style.boxShadow   = '';
+        }, { once: true });
+      }
+    }
+  });
 
 })();
 </script>
