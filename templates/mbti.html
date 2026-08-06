@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='82' x='50' text-anchor='middle' font-size='82' font-weight='900' fill='%236c63ff' font-family='Arial,sans-serif'>Z</text></svg>">
+<title>MBTI Personality Predictor - Zanevo</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:          #06090f;
+    --surface:     #0d1525;
+    --surface2:    #111f34;
+    --surface3:    #1a2438;
+    --border:      #1e2e48;
+    --border2:     #273d5e;
+    --text:        #f0f4ff;
+    --muted:       #9baabf;
+    --subtle:      #6b7fa3;
+    --ph:          #4a5a7a;
+    --accent:      #ec4899;
+    --accent-dim:  rgba(236,72,153,0.11);
+    --accent-ring: rgba(236,72,153,0.22);
+    --success:     #4ade80;
+    --warn:        #fbbf24;
+    --error:       #f87171;
+    --max-w:       1440px;
+    --pad:         clamp(1.5rem, 4vw, 4rem);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Space Grotesk', sans-serif; font-weight: 400;
+    min-height: 100vh; display: flex; flex-direction: column;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: radial-gradient(circle, rgba(30,50,90,0.45) 1px, transparent 1px);
+    background-size: 32px 32px; pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: ''; position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 90% 50% at 50% -10%, rgba(236,72,153,0.09) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 90% 80%,  rgba(155,110,245,0.06) 0%, transparent 55%);
+    pointer-events: none; z-index: 0;
+  }
+  * { position: relative; z-index: 1; }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 200;
+    background: rgba(6,9,15,0.92); backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    max-width: var(--max-w); margin: 0 auto; padding: 0 var(--pad);
+    width: 100%; display: flex; align-items: center; justify-content: space-between;
+    height: 62px;
+  }
+  .logo {
+    font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.05rem;
+    color: var(--text); text-decoration: none; letter-spacing: -0.01em;
+  }
+  .logo em { font-style: normal; color: var(--accent); }
+  .nav-links { display: flex; align-items: center; gap: 10px; }
+  .nav-link {
+    font-size: 0.82rem; font-weight: 500; color: var(--muted);
+    text-decoration: none; padding: 6px 14px; border-radius: 6px;
+    border: 1px solid var(--border); display: flex; align-items: center; gap: 7px;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+  }
+  .nav-link:hover { color: var(--text); background: var(--surface); border-color: var(--border2); }
+  .nav-link svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+  /* SHELL */
+  .shell { display: grid; grid-template-columns: 300px 1fr; flex: 1; }
+
+  /* SIDEBAR */
+  .sidebar {
+    border-right: 1px solid var(--border); padding: 36px 28px;
+    position: sticky; top: 62px; height: calc(100vh - 62px);
+    overflow-y: auto; display: flex; flex-direction: column;
+  }
+  .sidebar::-webkit-scrollbar { width: 0; }
+
+  .model-badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--accent-dim); border: 1px solid rgba(236,72,153,0.28);
+    color: var(--accent); font-size: 0.65rem; font-family: 'Syne', sans-serif;
+    font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 5px 11px; border-radius: 4px; width: fit-content; margin-bottom: 20px;
+  }
+  .badge-dot { width: 5px; height: 5px; background: var(--accent); border-radius: 50%; animation: blink 2s infinite; flex-shrink: 0; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  .sidebar-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.55rem; line-height: 1.1; letter-spacing: -0.02em; color: var(--text); margin-bottom: 12px; }
+  .sidebar-title span { color: var(--accent); display: block; }
+  .sidebar-desc { font-size: 0.875rem; color: var(--muted); line-height: 1.72; margin-bottom: 24px; }
+
+  /* quiz progress in sidebar */
+  .quiz-progress-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 16px; margin-bottom: 24px;
+  }
+  .qp-label {
+    font-size: 0.63rem; font-family: 'Syne', sans-serif; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--subtle);
+    margin-bottom: 10px;
+  }
+  .qp-track { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 8px; }
+  .qp-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; width: 0%; }
+  .qp-count { font-size: 0.75rem; color: var(--muted); font-family: 'Syne', sans-serif; font-weight: 700; }
+  .qp-count em { font-style: normal; color: var(--accent); }
+
+  /* dimension dots in sidebar */
+  .dim-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+  .dim-item {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.8rem; color: var(--muted);
+  }
+  .dim-pip {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    background: var(--border2); transition: background 0.3s, box-shadow 0.3s;
+  }
+  .dim-pip.done { background: var(--accent); box-shadow: 0 0 6px rgba(236,72,153,0.5); }
+  .dim-label { font-weight: 500; min-width: 24px; }
+  .dim-vs { font-size: 0.7rem; color: var(--subtle); }
+
+  .signals-title { font-size: 0.63rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--subtle); margin-bottom: 12px; }
+  .signal-item { display: flex; align-items: flex-start; gap: 9px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 0.81rem; color: var(--muted); line-height: 1.45; }
+  .signal-item:last-child { border-bottom: none; }
+  .signal-dot { width: 5px; height: 5px; background: var(--accent); border-radius: 50%; flex-shrink: 0; margin-top: 6px; opacity: 0.55; }
+
+  /* FORM AREA */
+  .form-area { padding: 36px 48px 64px; max-width: calc(var(--max-w) - 300px); display: flex; flex-direction: column; }
+
+  .disclaimer {
+    display: flex; align-items: center; gap: 10px; padding: 11px 16px; margin-bottom: 36px;
+    background: rgba(236,72,153,0.06); border: 1px solid rgba(236,72,153,0.18);
+    border-radius: 7px; font-size: 0.78rem; color: var(--muted); line-height: 1.5;
+  }
+  .disclaimer svg { width: 14px; height: 14px; color: var(--accent); flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* QUIZ SCREEN */
+  .quiz-screen { display: none; flex-direction: column; }
+  .quiz-screen.active { display: flex; }
+
+  .q-meta {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 28px;
+  }
+  .q-num {
+    font-size: 0.62rem; font-family: 'Syne', sans-serif; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--subtle);
+  }
+  .q-dim-tag {
+    font-size: 0.62rem; font-family: 'Syne', sans-serif; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent); background: var(--accent-dim);
+    border: 1px solid rgba(236,72,153,0.2);
+    padding: 3px 9px; border-radius: 4px;
+  }
+
+  .q-text {
+    font-family: 'Bricolage Grotesque', sans-serif; font-weight: 600;
+    font-size: clamp(1.15rem, 2.2vw, 1.5rem); line-height: 1.35;
+    letter-spacing: -0.01em; color: var(--text); margin-bottom: 32px;
+    max-width: 640px;
+  }
+
+  /* MCQ OPTIONS */
+  .options-grid {
+    display: flex; flex-direction: column; gap: 12px; max-width: 620px;
+  }
+  .option-card {
+    display: flex; align-items: center; gap: 16px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 20px; cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.12s;
+    user-select: none; position: relative; overflow: hidden;
+  }
+  .option-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: var(--accent-dim); opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .option-card:hover { border-color: var(--border2); transform: translateX(3px); }
+  .option-card:hover::before { opacity: 1; }
+  .option-card.selected {
+    border-color: var(--accent); background: rgba(236,72,153,0.08);
+    transform: translateX(3px);
+  }
+  .option-card.selected::before { opacity: 0; }
+
+  .opt-letter {
+    width: 30px; height: 30px; border-radius: 6px; flex-shrink: 0;
+    background: var(--surface2); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.7rem; font-family: 'Syne', sans-serif; font-weight: 700;
+    color: var(--subtle); letter-spacing: 0.05em;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    position: relative; z-index: 1;
+  }
+  .option-card.selected .opt-letter {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+  }
+  .opt-text {
+    font-size: 0.95rem; font-weight: 500; color: var(--muted); line-height: 1.4;
+    position: relative; z-index: 1;
+    transition: color 0.15s;
+  }
+  .option-card:hover .opt-text { color: var(--text); }
+  .option-card.selected .opt-text { color: var(--text); }
+
+  /* NAV BUTTONS */
+  .quiz-nav {
+    display: flex; align-items: center; gap: 12px; margin-top: 32px;
+  }
+  .btn-next {
+    display: inline-flex; align-items: center; gap: 9px;
+    background: var(--accent); color: #fff; border: none;
+    font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; font-weight: 600;
+    padding: 12px 26px; border-radius: 8px; cursor: pointer;
+    transition: opacity 0.15s, transform 0.12s, box-shadow 0.15s;
+    box-shadow: 0 3px 16px rgba(236,72,153,0.28);
+  }
+  .btn-next:disabled { opacity: 0.3; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-next:not(:disabled):hover { opacity: 0.88; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(236,72,153,0.42); }
+  .btn-next:not(:disabled):active { transform: translateY(0); }
+  .btn-next svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+  .btn-back {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: transparent; color: var(--muted); border: 1px solid var(--border);
+    font-family: 'Space Grotesk', sans-serif; font-size: 0.88rem; font-weight: 500;
+    padding: 11px 20px; border-radius: 8px; cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .btn-back:hover { color: var(--text); border-color: var(--border2); background: var(--surface); }
+  .btn-back svg { width: 13px; height: 13px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* RESULT SCREEN */
+  .result-screen { display: none; flex-direction: column; }
+  .result-screen.active { display: flex; }
+
+  /* hidden form to POST answers */
+  #answer-form { display: none; }
+
+  /* RESULT BAR */
+  .result-bar {
+    border-radius: 12px; border: 1px solid rgba(236,72,153,0.35);
+    background: rgba(236,72,153,0.06); overflow: hidden; margin-bottom: 24px;
+  }
+  .rb-header {
+    display: flex; align-items: center; gap: 16px;
+    padding: 24px 28px 20px; border-bottom: 1px solid var(--border);
+  }
+  .rb-type-badge {
+    font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800;
+    font-size: 2.8rem; letter-spacing: -0.03em; color: var(--accent);
+    line-height: 1;
+  }
+  .rb-type-meta {}
+  .rb-eyebrow { font-size: 0.63rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--subtle); margin-bottom: 6px; }
+  .rb-type-name {
+    font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700;
+    font-size: 1.1rem; color: var(--text); letter-spacing: -0.01em;
+  }
+
+  .rb-body { padding: 20px 28px 24px; }
+
+  .rb-dims {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;
+  }
+  .rb-dim {
+    padding: 12px 14px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; text-align: center;
+  }
+  .rb-dim-letter {
+    font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800;
+    font-size: 1.5rem; color: var(--accent); letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+  .rb-dim-label { font-size: 0.67rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .rb-dim-conf {
+    font-size: 0.78rem; font-weight: 600; color: var(--text);
+  }
+  .rb-dim-bar-track { height: 3px; background: var(--border); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+  .rb-dim-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; }
+
+  .rb-description {
+    font-size: 0.9rem; color: var(--muted); line-height: 1.75;
+    border-top: 1px solid var(--border); padding-top: 18px;
+  }
+
+  /* error bar */
+  .err-bar {
+    border-radius: 10px; border: 1px solid rgba(248,113,113,0.35);
+    background: rgba(248,113,113,0.06); padding: 18px 22px; margin-bottom: 20px;
+  }
+  .err-eyebrow { font-size: 0.62rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--error); margin-bottom: 6px; }
+  .err-msg { font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
+
+  .btn-restart {
+    display: inline-flex; align-items: center; gap: 9px;
+    background: transparent; color: var(--muted); border: 1px solid var(--border);
+    font-family: 'Space Grotesk', sans-serif; font-size: 0.88rem; font-weight: 500;
+    padding: 11px 22px; border-radius: 8px; cursor: pointer; margin-top: 8px;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .btn-restart:hover { color: var(--text); border-color: var(--border2); background: var(--surface); }
+
+  /* RESPONSIVE */
+  @media (max-width: 960px) {
+    .shell { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); padding: 28px 24px; }
+    .form-area { padding: 28px 24px 48px; max-width: 100%; }
+    .rb-dims { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 560px) {
+    .rb-dims { grid-template-columns: repeat(2, 1fr); }
+    .q-text { font-size: 1.1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="logo">Zanevo<em>.</em></a>
+    <div class="nav-links">
+      <a href="/#models" class="nav-link">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Models
+      </a>
+      <a href="/#methodology" class="nav-link">
+        <svg viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/></svg>
+        Methodology
+      </a>
+      <a href="/" class="nav-link">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home
+      </a>
+    </div>
+  </div>
+</nav>
+
+<div style="max-width:var(--max-w);margin:0 auto;width:100%;display:flex;flex:1;">
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="model-badge">
+      <span class="badge-dot"></span>
+      Deep Learning · Live
+    </div>
+
+    <div class="sidebar-title">
+      MBTI
+      <span>Personality</span>
+    </div>
+
+    <p class="sidebar-desc">
+      Four independent binary classifiers built in pure NumPy from scratch, each predicting one dimension of your MBTI type from writing-style signals. No sklearn, no PyTorch — just weights, biases, and backprop.
+    </p>
+
+    <p class="sidebar-desc" style="font-size:0.72rem;color:var(--subtle);margin-top:-8px;">
+      Predictive strength isn't equal across dimensions — each result below is labeled with how well that dimension actually held up on held-out test data.
+    </p>
+
+    <!-- quiz progress -->
+    <div class="quiz-progress-box">
+      <div class="qp-label">Quiz Progress</div>
+      <div class="qp-track"><div class="qp-fill" id="qp-fill"></div></div>
+      <div class="qp-count"><em id="qp-current">0</em> of 7 answered</div>
+    </div>
+
+    <!-- dimension tracker -->
+    <div class="signals-title">Dimensions</div>
+    <div class="dim-list">
+      <div class="dim-item">
+        <span class="dim-pip" id="pip-IE"></span>
+        <span class="dim-label">I / E</span>
+        <span class="dim-vs">Introvert vs Extravert</span>
+      </div>
+      <div class="dim-item">
+        <span class="dim-pip" id="pip-NS"></span>
+        <span class="dim-label">N / S</span>
+        <span class="dim-vs">Intuitive vs Sensing</span>
+      </div>
+      <div class="dim-item">
+        <span class="dim-pip" id="pip-TF"></span>
+        <span class="dim-label">T / F</span>
+        <span class="dim-vs">Thinking vs Feeling</span>
+      </div>
+      <div class="dim-item">
+        <span class="dim-pip" id="pip-JP"></span>
+        <span class="dim-label">J / P</span>
+        <span class="dim-vs">Judging vs Perceiving</span>
+      </div>
+    </div>
+
+    <div class="signals-title" style="margin-top: 8px;">What the model reads</div>
+    <div class="signal-item"><span class="signal-dot"></span>How much you say — word count proxy</div>
+    <div class="signal-item"><span class="signal-dot"></span>How often you ask questions — curiosity signal</div>
+    <div class="signal-item"><span class="signal-dot"></span>Exclamation use — emotional expressiveness</div>
+    <div class="signal-item"><span class="signal-dot"></span>I vs We ratio — self vs group orientation</div>
+    <div class="signal-item"><span class="signal-dot"></span>Sentence length — structured vs exploratory</div>
+    <div class="signal-item"><span class="signal-dot"></span>Trailing off — ambiguity tolerance</div>
+    <div class="signal-item"><span class="signal-dot"></span>CAPS emphasis — intensity of expression</div>
+  </aside>
+
+  <!-- FORM AREA -->
+  <main class="form-area">
+
+    <div class="disclaimer">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Built on writing-style features from the MBTI Kaggle dataset. These questions map to linguistic patterns — answer based on how you naturally write, not how you'd like to come across.
+    </div>
+
+    <!-- QUIZ QUESTIONS (one screen at a time) -->
+    <form method="POST" id="mbti-form" action="">
+      {% csrf_token %}
+      <input type="hidden" name="submitted" value="1">
+
+      <!-- Q1: word count / verbosity -->
+      <div class="quiz-screen active" id="screen-0" data-dim="IE">
+        <div class="q-meta">
+          <span class="q-num">Question 1 of 7</span>
+          <span class="q-dim-tag">I / E</span>
+        </div>
+        <div class="q-text">When someone asks how your day was, how much do you typically say?</div>
+        <div class="options-grid">
+          <label class="option-card" data-q="q2" data-val="-1.5">
+            <span class="opt-letter">A</span>
+            <span class="opt-text">One or two words</span>
+            <input type="radio" name="q2" value="-1.5" style="display:none">
+          </label>
+          <label class="option-card" data-q="q2" data-val="-0.5">
+            <span class="opt-letter">B</span>
+            <span class="opt-text">A short sentence</span>
+            <input type="radio" name="q2" value="-0.5" style="display:none">
+          </label>
+          <label class="option-card" data-q="q2" data-val="0.5">
+            <span class="opt-letter">C</span>
+            <span class="opt-text">A few sentences</span>
+            <input type="radio" name="q2" value="0.5" style="display:none">
+          </label>
+          <label class="option-card" data-q="q2" data-val="1.5">
+            <span class="opt-letter">D</span>
+            <span class="opt-text">A detailed story</span>
+            <input type="radio" name="q2" value="1.5" style="display:none">
+          </label>
+        </div>
+        <div class="quiz-nav">
+          <button type="button" class="btn-next" id="next-0" disabled>
+            Next
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Q2: question mark frequency -->
+      <div class="quiz-screen" id="screen-1" data-dim="NS">
+        <div class="q-meta">
+          <span class="q-num">Question 2 of 7</span>
+          <span class="q-dim-tag">N / S</span>
+        </div>
+        <div class="q-text">In conversations, how often do you ask follow-up questions?</div>
+        <div class="options-grid">
+          <label class="option-card" data-q="q3" data-val="-1.5">
+            <span class="opt-letter">A</span>
+            <span class="opt-text">Rarely — I let the conversation flow naturally</span>
+            <input type="radio" name="q3" value="-1.5" style="display:none">
+          </label>
+          <label class="option-card" data-q="q3" data-val="-0.5">
+            <span class="opt-letter">B</span>
+            <span class="opt-text">Sometimes, if something catches my interest</span>
+            <input type="radio" name="q3" value="-0.5" style="display:none">
+          </label>
+          <label class="option-card" data-q="q3" data-val="0.5">
+            <span class="opt-letter">C</span>
+            <span class="opt-text">Often — I like to understand things fully</span>
+            <input type="radio" name="q3" value="0.5" style="display:none">
+          </label>
+          <label class="option-card" data-q="q3" data-val="1.5">
+            <span class="opt-letter">D</span>
+            <span class="opt-text">Constantly — one answer always leads to three more questions</span>
+            <input type="radio" name="q3" value="1.5" style="display:none">
+          </label>
+        </div>
+        <div class="quiz-nav">
+          <button type="button" class="btn-back" onclick="goBack(1)">
+            <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Back
+          </button>
+          <button type="button" class="btn-next" id="next-1" disabled>
+            Next
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Q3: exclamation frequency -->
+      <div class="quiz-screen" id="screen-2" data-dim="TF">
+        <div class="q-meta">
+          <span class="q-num">Question 3 of 7</span>
+          <span class="q-dim-tag">T / F</span>
+        </div>
+        <div class="q-text">When texting, how often do you use exclamation marks?</div>
+        <div class="options-grid">
+          <label class="option-card" data-q="q6" data-val="-1.5">
+            <span class="opt-letter">A</span>
+            <span class="opt-text">Never — punctuation is just punctuation</span>
+            <input type="radio" name="q6" value="-1.5" style="display:none">
+          </label>
+          <label class="option-card" data-q="q6" data-val="-0.5">
+            <span class="opt-letter">B</span>
+            <span class="opt-text">Rarely — only when something is genuinely exciting</span>
+            <input type="radio" name="q6" value="-0.5" style="display:none">
+          </label>
+          <label class="option-card" data-q="q6" data-val="0.5">
+            <span class="opt-letter">C</span>
+            <span class="opt-text">Often — they make messages feel warmer</span>
+            <input type="radio" name="q6" value="0.5" style="display:none">
+          </label>
+          <label class="option-card" data-q="q6" data-val="1.5">
+            <span class="opt-letter">D</span>
+            <span class="opt-text">Almost every message has at least one!</span>
+            <input type="radio" name="q6" value="1.5" style="display:none">
+          </label>
+        </div>
+        <div class="quiz-nav">
+          <button type="button" class="btn-back" onclick="goBack(2)">
+            <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Back
+          </button>
+          <button type="button" class="btn-next" id="next-2" disabled>
+            Next
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Q4: I/We ratio -->
+      <div class="quiz-screen" id="screen-3" data-dim="IE">
+        <div class="q-meta">
+          <span class="q-num">Question 4 of 7</span>
+          <span class="q-dim-tag">I / E</span>
+        </div>
+        <div class="q-text">In conversation, do you find yourself saying "I think" more, or "we should" more?</div>
+        <div class="options-grid">
+          <label class="option-card" data-q="q8" data-val="-1.5">
+            <span class="opt-letter">A</span>
+            <span class="opt-text">Almost always "we" — group framing comes naturally</span>
+            <input type="radio" name="q8" value="-1.5" style="display:none">
+          </label>
+          <label class="option-card" data-q="q8" data-val="-0.5">
+            <span class="opt-letter">B</span>
+            <span class="opt-text">More "we" than "I" — I default to collective thinking</span>
+            <input type="radio" name="q8" value="-0.5" style="display:none">
+          </label>
+          <label class="option-card" data-q="q8" data-val="0.5">
+            <span class="opt-letter">C</span>
+            <span class="opt-text">More "I" than "we" — I tend to speak from my own perspective</span>
+            <input type="radio" name="q8" value="0.5" style="display:none">
+          </label>
+          <label class="option-card" data-q="q8" data-val="1.5">
+            <span class="opt-letter">D</span>
+            <span class="opt-text">Almost always "I" — I express my own views directly</span>
+            <input type="radio" name="q8" value="1.5" style="display:none">
+          </label>
+        </div>
+        <div class="quiz-nav">
+          <button type="button" class="btn-back" onclick="goBack(3)">
+            <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Back
+          </button>
+          <button type="button" class="btn-next" id="next-3" disabled>
+            Next
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Q5: sentence length -->
+      <div class="quiz-screen" id="screen-4" data-dim="JP">
+        <div class="q-meta">
+          <span class="q-num">Question 5 of 7</span>
+          <span class="q-dim-tag">J / P</span>
+        </div>
+        <div class="q-text">When you write a message, do you prefer short, punchy sentences or long, flowing ones?</div>
+        <div class="options-grid">
+          <label class="option-card" data-q="q10" data-val="-1.5">
+            <span class="opt-letter">A</span>
+            <span class="opt-text">Very short — I get to the point fast</span>
+            <input type="radio" name="q10" value="-1.5" style="display:none">
+          </label>
+          <label class="option-card" data-q="q10" data-val="-0.5">
+            <span class="opt-letter">B</span>
+            <span class="opt-text">Fairly short — concise but not terse</span>
+            <input type="radio" name="q10" value="-0.5" style="display:none">
+          </label>
+          <label class="option-card" data-q="q10" data-val="0.5">
+            <span class="opt-letter">C</span>
+            <span class="opt-text">Fairly long — I like to give full context</span>
+            <input type="radio" name="q10" value="0.5" style="display:none">
+          </label>
+          <label class="option-card" data-q="q10" data-val="1.5">
+            <span class="opt-letter">D</span>
+            <span class="opt-text">Very long and detailed — brevity feels incomplete</span>
+            <input type="radio" name="q10" value="1.5" style="display:none">
+          </label>
+        </div>
+        <div class="quiz-nav">
+          <button type="button" class="btn-back" onclick="goBack(4)">
+            <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Back
+          </button>
+          <button type="button" class="btn-next" id="next-4" disabled>
+            Next
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Q6: ellipsis -->
+      <div class="quiz-screen" id="screen-5" data-dim="NS">
+        <div class="q-meta">
+          <span class="q-num">Question 6 of 7</span>
+          <span class="q-dim-tag">N / S</span>
+        </div>
+        <div class="q-text">Do you often trail off mid-thought when writing, using "..."?</div>
+        <div class="options-grid">
+          <label class="option-card" data-q="q12" data-val="-1.5">
+            <span class="opt-letter">A</span>
+            <span class="opt-text">Never — I finish my thoughts completely</span>
+            <input type="radio" name="q12" value="-1.5" style="display:none">
+          </label>
+          <label class="option-card" data-q="q12" data-val="-0.5">
+            <span class="opt-letter">B</span>
+            <span class="opt-text">Rarely — only when a thought genuinely trails off</span>
+            <input type="radio" name="q12" value="-0.5" style="display:none">
+          </label>
+          <label class="option-card" data-q="q12" data-val="0.5">
+            <span class="opt-letter">C</span>
+            <span class="opt-text">Sometimes — when I'm thinking out loud</span>
+            <input type="radio" name="q12" value="0.5" style="display:none">
+          </label>
+          <label class="option-card" data-q="q12" data-val="1.5">
+            <span class="opt-letter">D</span>
+            <span class="opt-text">Often — it feels natural to leave things open...</span>
+            <input type="radio" name="q12" value="1.5" style="display:none">
+          </label>
+        </div>
+        <div class="quiz-nav">
+          <button type="button" class="btn-back" onclick="goBack(5)">
+            <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Back
+          </button>
+          <button type="button" class="btn-next" id="next-5" disabled>
+            Next
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Q7: CAPS -->
+      <div class="quiz-screen" id="screen-6" data-dim="TF">
+        <div class="q-meta">
+          <span class="q-num">Question 7 of 7</span>
+          <span class="q-dim-tag">T / F</span>
+        </div>
+        <div class="q-text">How often do you use ALL CAPS for emphasis when texting?</div>
+        <div class="options-grid">
+          <label class="option-card" data-q="q14" data-val="-1.5">
+            <span class="opt-letter">A</span>
+            <span class="opt-text">Never — it feels like shouting</span>
+            <input type="radio" name="q14" value="-1.5" style="display:none">
+          </label>
+          <label class="option-card" data-q="q14" data-val="-0.5">
+            <span class="opt-letter">B</span>
+            <span class="opt-text">Rarely — only in truly extreme moments</span>
+            <input type="radio" name="q14" value="-0.5" style="display:none">
+          </label>
+          <label class="option-card" data-q="q14" data-val="0.5">
+            <span class="opt-letter">C</span>
+            <span class="opt-text">Sometimes — when I really want to stress something</span>
+            <input type="radio" name="q14" value="0.5" style="display:none">
+          </label>
+          <label class="option-card" data-q="q14" data-val="1.5">
+            <span class="opt-letter">D</span>
+            <span class="opt-text">Often — it's the best way to show I MEAN it</span>
+            <input type="radio" name="q14" value="1.5" style="display:none">
+          </label>
+        </div>
+        <div class="quiz-nav">
+          <button type="button" class="btn-back" onclick="goBack(6)">
+            <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Back
+          </button>
+          <button type="submit" class="btn-next" id="next-6" disabled>
+            See My Type
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </button>
+        </div>
+      </div>
+
+    </form>
+
+    <!-- RESULT SCREEN (shown after POST, outside the form) -->
+    {% if result %}
+    <div class="result-screen active" id="result-screen">
+
+      <div class="result-bar">
+        <div class="rb-header">
+          <div class="rb-type-badge">{{ result }}</div>
+          <div class="rb-type-meta">
+            <div class="rb-eyebrow">Your Personality Type</div>
+            <div class="rb-type-name" id="rb-type-name">
+              {% if result == 'INTJ' %}The Architect
+              {% elif result == 'INTP' %}The Logician
+              {% elif result == 'ENTJ' %}The Commander
+              {% elif result == 'ENTP' %}The Debater
+              {% elif result == 'INFJ' %}The Advocate
+              {% elif result == 'INFP' %}The Mediator
+              {% elif result == 'ENFJ' %}The Protagonist
+              {% elif result == 'ENFP' %}The Campaigner
+              {% elif result == 'ISTJ' %}The Logistician
+              {% elif result == 'ISFJ' %}The Defender
+              {% elif result == 'ESTJ' %}The Executive
+              {% elif result == 'ESFJ' %}The Consul
+              {% elif result == 'ISTP' %}The Virtuoso
+              {% elif result == 'ISFP' %}The Adventurer
+              {% elif result == 'ESTP' %}The Entrepreneur
+              {% elif result == 'ESFP' %}The Entertainer
+              {% else %}Unknown Type
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="rb-body">
+          <div class="rb-dims">
+            <div class="rb-dim">
+              <div class="rb-dim-letter">{{ result.0 }}</div>
+              <div class="rb-dim-label">{% if result.0 == 'I' %}Introvert{% else %}Extravert{% endif %}</div>
+              <div class="rb-dim-conf">{{ confidences.IE.value }}%</div>
+              <div class="rb-dim-bar-track"><div class="rb-dim-bar-fill" style="width: {{ confidences.IE.value }}%"></div></div>
+            </div>
+            <div class="rb-dim">
+              <div class="rb-dim-letter">{{ result.1 }}</div>
+              <div class="rb-dim-label">{% if result.1 == 'N' %}Intuitive{% else %}Sensing{% endif %}</div>
+              <div class="rb-dim-conf">{{ confidences.NS.value }}%</div>
+              <div class="rb-dim-bar-track"><div class="rb-dim-bar-fill" style="width: {{ confidences.NS.value }}%"></div></div>
+            </div>
+            <div class="rb-dim">
+              <div class="rb-dim-letter">{{ result.2 }}</div>
+              <div class="rb-dim-label">{% if result.2 == 'T' %}Thinking{% else %}Feeling{% endif %}</div>
+              <div class="rb-dim-conf">{{ confidences.TF.value }}%</div>
+              <div class="rb-dim-bar-track"><div class="rb-dim-bar-fill" style="width: {{ confidences.TF.value }}%"></div></div>
+            </div>
+            <div class="rb-dim">
+              <div class="rb-dim-letter">{{ result.3 }}</div>
+              <div class="rb-dim-label">{% if result.3 == 'J' %}Judging{% else %}Perceiving{% endif %}</div>
+              <div class="rb-dim-conf">{{ confidences.JP.value }}%</div>
+              <div class="rb-dim-bar-track"><div class="rb-dim-bar-fill" style="width: {{ confidences.JP.value }}%"></div></div>
+            </div>
+          </div>
+
+          <div class="rb-description">
+            This model learned from real writing, not 7 multiple-choice answers — take the result as a rough guess, not a verdict.
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-restart" onclick="window.location.href=window.location.pathname">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.8"/></svg>
+        Retake the quiz
+      </button>
+    </div>
+    {% endif %}
+
+    {% if submitted and not result %}
+    <div class="result-screen active">
+      <div class="err-bar">
+        <div class="err-eyebrow">Incomplete Submission</div>
+        <div class="err-msg">Not all 7 questions were answered. Please complete the quiz from the start.</div>
+      </div>
+      <button class="btn-restart" onclick="window.location.href=window.location.pathname">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.8"/></svg>
+        Start again
+      </button>
+    </div>
+    {% endif %}
+
+  </main>
+
+</div>
+</div>
+
+<script>
+(function () {
+  const TOTAL = 7;
+  const qpFill    = document.getElementById('qp-fill');
+  const qpCurrent = document.getElementById('qp-current');
+  const screens   = document.querySelectorAll('.quiz-screen');
+
+  // dim -> question indices (0-based screen numbers)
+  const DIM_SCREENS = { IE: [0, 3], NS: [1, 5], TF: [2, 6], JP: [4] };
+  const DIM_PIPS = {
+    IE: document.getElementById('pip-IE'),
+    NS: document.getElementById('pip-NS'),
+    TF: document.getElementById('pip-TF'),
+    JP: document.getElementById('pip-JP'),
+  };
+
+  // Track selected answers per screen
+  const answers = {};
+
+  // Hide quiz if result is already showing (page loaded after POST)
+  const resultScreen = document.getElementById('result-screen');
+  if (resultScreen) {
+    screens.forEach(s => s.style.display = 'none');
+    updateProgress(TOTAL);
+    // Mark all dim pips done
+    Object.values(DIM_PIPS).forEach(pip => pip.classList.add('done'));
+    return;
+  }
+
+  let currentScreen = 0;
+
+  function showScreen(idx) {
+    screens.forEach((s, i) => s.classList.toggle('active', i === idx));
+    currentScreen = idx;
+    // restore selection state if user went back
+    const screen = screens[idx];
+    const qId = getQId(screen);
+    if (answers[qId] !== undefined) {
+      screen.querySelectorAll('.option-card').forEach(card => {
+        card.classList.toggle('selected', card.dataset.val === String(answers[qId]));
+      });
+      enableNext(idx);
+    }
+    // scroll to top of form area on mobile
+    screen.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function getQId(screen) {
+    const card = screen.querySelector('.option-card');
+    return card ? card.dataset.q : null;
+  }
+
+  function enableNext(idx) {
+    const btn = document.getElementById('next-' + idx);
+    if (btn) btn.disabled = false;
+  }
+
+  function updateProgress(answered) {
+    const pct = Math.round((answered / TOTAL) * 100);
+    qpFill.style.width = pct + '%';
+    qpCurrent.textContent = answered;
+  }
+
+  function updateDimPips() {
+    // A dim is "done" if all its screens have been answered
+    Object.entries(DIM_SCREENS).forEach(([dim, screenIdxs]) => {
+      const allDone = screenIdxs.every(idx => {
+        const screen = screens[idx];
+        const qId = getQId(screen);
+        return answers[qId] !== undefined;
+      });
+      DIM_PIPS[dim].classList.toggle('done', allDone);
+    });
+  }
+
+  // Attach option click handlers
+  screens.forEach((screen, sIdx) => {
+    screen.querySelectorAll('.option-card').forEach(card => {
+      card.addEventListener('click', function () {
+        const qId = this.dataset.q;
+        const val  = this.dataset.val;
+
+        // deselect siblings
+        screen.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+        this.classList.add('selected');
+
+        // check the hidden radio
+        const radio = this.querySelector('input[type="radio"]');
+        if (radio) radio.checked = true;
+
+        // store answer
+        answers[qId] = val;
+        enableNext(sIdx);
+
+        // update sidebar counters
+        updateProgress(Object.keys(answers).length);
+        updateDimPips();
+      });
+    });
+
+    // Next button
+    const nextBtn = document.getElementById('next-' + sIdx);
+    if (nextBtn && nextBtn.type === 'button') {
+      nextBtn.addEventListener('click', function () {
+        if (sIdx < screens.length - 1) {
+          showScreen(sIdx + 1);
+        }
+      });
+    }
+  });
+
+  // Back function (called from inline onclick)
+  window.goBack = function (screenIdx) {
+    if (screenIdx > 0) showScreen(screenIdx - 1);
+  };
+
+  // Initial state
+  updateProgress(0);
+
+})();
+</script>
+</body>
+</html>

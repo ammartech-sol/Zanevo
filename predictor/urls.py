@@ -12,4 +12,5 @@ urlpatterns = [
     path('privacy/', views.privacy, name='privacy'),
     path('terms/', views.terms, name='terms'),
     path('ecommerce/', views.segmentation_predict, name='ecommerce'),
+    path('mbti/', views.mbti_predict, name='mbti'),
 ]

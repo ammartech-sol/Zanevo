@@ -1,6 +1,7 @@
 import joblib
 import json
 from pathlib import Path
+import numpy as np
 
 BASE = Path(__file__).resolve().parent.parent / 'ml_models'
 
@@ -79,4 +80,24 @@ try:
     print("Segmentation model loaded OK")
 except Exception as e:
     print(f"Segmentation model FAILED: {e}")
-    
+
+def load_mbti_dim(letter):
+    return {
+        'W1': np.load(BASE / f'{letter}_W1.npy'),
+        'b1': np.load(BASE / f'{letter}_b1.npy'),
+        'W2': np.load(BASE / f'{letter}_W2.npy'),
+        'b2': np.load(BASE / f'{letter}_b2.npy'),
+        'W3': np.load(BASE / f'{letter}_W3.npy'),
+        'b3': np.load(BASE / f'{letter}_b3.npy'),
+    }
+
+try:
+    mbti = {
+        'IE': load_mbti_dim('IE'),
+        'NS': load_mbti_dim('NS'),
+        'TF': load_mbti_dim('TF'),
+        'JP': load_mbti_dim('JP'),
+    }
+    print("MBTI loaded OK")
+except Exception as e:
+    print(f"MBTI FAILED: {e}")

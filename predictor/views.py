@@ -2,6 +2,7 @@ from django.shortcuts import render
 import pandas as pd
 import numpy as np
 from . import ml_loader as ml
+from .mbti_utils import QUESTIONS, predict_mbti
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -534,3 +535,22 @@ def privacy(request):
 
 def terms(request):
     return render(request, 'terms.html')
+
+# ── MBTI ─────────────────────────────────────────────────────
+
+def mbti_predict(request):
+    result = None
+    confidences = None
+
+    if request.method == 'POST':
+        answers = {}
+        for question in QUESTIONS:
+            answers[question['id']] = float(request.POST[question['id']])
+
+        result, confidences = predict_mbti(answers, ml.mbti)
+
+    return render(request, 'mbti.html', {
+        'questions': QUESTIONS,
+        'result': result,
+        'confidences': confidences,
+    })
