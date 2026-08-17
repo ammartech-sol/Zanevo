@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='82' x='50' text-anchor='middle' font-size='82' font-weight='900' fill='%236c63ff' font-family='Arial,sans-serif'>Z</text></svg>">
+<title>Plant Disease Segmentation - Zanevo</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:          #06090f;
+    --surface:     #0d1525;
+    --surface2:    #111f34;
+    --surface3:    #1a2438;
+    --border:      #1e2e48;
+    --border2:     #273d5e;
+    --text:        #f0f4ff;
+    --muted:       #9baabf;
+    --subtle:      #3a4a6b;
+    --ph:          #4a5a7a;
+    --accent:      #4ade80;
+    --accent-dim:  rgba(74,222,128,0.12);
+    --accent-ring: rgba(74,222,128,0.22);
+    --success:     #4ade80;
+    --error:       #f87171;
+    --max-w:       1440px;
+    --pad:         clamp(1.5rem, 4vw, 4rem);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Space Grotesk', sans-serif; font-weight: 400;
+    min-height: 100vh; display: flex; flex-direction: column;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: radial-gradient(circle, rgba(30,50,90,0.45) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 90% 50% at 50% -10%, rgba(79,142,247,0.09) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 90% 80%,  rgba(74,222,128,0.06) 0%, transparent 55%);
+    pointer-events: none; z-index: 0;
+  }
+  * { position: relative; z-index: 1; }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 200;
+    background: rgba(6,9,15,0.92);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 var(--pad);
+    width: 100%;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 62px;
+  }
+  .logo {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800; font-size: 1.05rem;
+    color: var(--text); text-decoration: none; letter-spacing: -0.01em;
+  }
+  .logo em { font-style: normal; color: var(--accent); }
+  .nav-links { display: flex; align-items: center; gap: 10px; }
+  .nav-link {
+    font-size: 0.82rem; font-weight: 500; color: var(--muted);
+    text-decoration: none; padding: 6px 14px; border-radius: 6px;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; gap: 7px;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+  }
+  .nav-link:hover { color: var(--text); background: var(--surface); border-color: var(--border2); }
+  .nav-link svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+  /* SHELL */
+  .shell { display: grid; grid-template-columns: 300px 1fr; flex: 1; }
+
+  /* SIDEBAR */
+  .sidebar { border-right: 1px solid var(--border); padding: 36px 28px; position: sticky; top: 62px; height: calc(100vh - 62px); overflow-y: auto; display: flex; flex-direction: column; }
+  .sidebar::-webkit-scrollbar { width: 0; }
+
+  .model-badge { display: inline-flex; align-items: center; gap: 7px; background: var(--accent-dim); border: 1px solid rgba(74,222,128,0.28); color: var(--accent); font-size: 0.65rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 5px 11px; border-radius: 4px; width: fit-content; margin-bottom: 20px; }
+  .badge-dot { width: 5px; height: 5px; background: var(--accent); border-radius: 50%; animation: blink 2s infinite; flex-shrink: 0; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  .sidebar-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.55rem; line-height: 1.1; letter-spacing: -0.02em; color: var(--text); margin-bottom: 12px; }
+  .sidebar-title span { color: var(--accent); display: block; }
+  .sidebar-desc { font-size: 0.875rem; color: var(--muted); line-height: 1.72; margin-bottom: 20px; }
+
+  .computed-note { background: var(--accent-dim); border: 1px solid rgba(74,222,128,0.18); border-radius: 8px; padding: 12px 14px; margin-bottom: 24px; }
+  .computed-note strong { display: block; font-size: 0.62rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+  .computed-note p { font-size: 0.79rem; color: var(--muted); line-height: 1.6; }
+
+  .sidebar-signals { }
+  .signals-title { font-size: 0.63rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--subtle); margin-bottom: 12px; }
+  .signal-item { display: flex; align-items: flex-start; gap: 9px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 0.81rem; color: var(--muted); line-height: 1.45; }
+  .signal-item:last-child { border-bottom: none; }
+  .signal-dot { width: 5px; height: 5px; background: var(--accent); border-radius: 50%; flex-shrink: 0; margin-top: 6px; opacity: 0.55; }
+
+  .sidebar-limitation { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border); }
+  .limitation-title { font-size: 0.63rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--subtle); margin-bottom: 10px; }
+  .limitation-text { font-size: 0.79rem; color: var(--muted); line-height: 1.6; }
+
+  /* FORM AREA */
+  .form-area { padding: 36px 48px 64px; max-width: calc(var(--max-w) - 300px); }
+
+  .disclaimer { display: flex; align-items: center; gap: 10px; padding: 11px 16px; margin-bottom: 32px; background: rgba(74,222,128,0.06); border: 1px solid rgba(74,222,128,0.18); border-radius: 7px; font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+  .disclaimer svg { width: 14px; height: 14px; color: var(--accent); flex-shrink: 0; }
+
+  .sh { display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--border); margin-bottom: 22px; margin-top: 32px; }
+  .sh:first-of-type { margin-top: 0; }
+  .sh-bar { width: 3px; height: 13px; background: var(--accent); border-radius: 2px; flex-shrink: 0; }
+  .sh-text { font-size: 0.67rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); flex: 1; }
+
+  /* UPLOAD DROPZONE */
+  .dropzone {
+    border: 1.5px dashed var(--border2); border-radius: 12px;
+    background: var(--surface2);
+    padding: 40px 24px; text-align: center;
+    cursor: pointer; transition: border-color 0.15s, background 0.15s;
+    margin-bottom: 24px;
+  }
+  .dropzone:hover, .dropzone.drag-over { border-color: var(--accent); background: #101c30; }
+  .dropzone.has-file { border-style: solid; border-color: rgba(74,222,128,0.35); }
+  .dz-icon { width: 34px; height: 34px; color: var(--accent); margin: 0 auto 14px; }
+  .dz-icon svg { width: 100%; height: 100%; }
+  .dz-text { font-size: 0.92rem; color: var(--text); font-weight: 500; margin-bottom: 6px; }
+  .dz-hint { font-size: 0.78rem; color: var(--subtle); }
+  .dz-filename { font-size: 0.85rem; color: var(--accent); font-weight: 500; margin-top: 10px; word-break: break-all; }
+  #plant-image-input { display: none; }
+
+  .preview-wrap { display: none; margin-bottom: 24px; }
+  .preview-wrap.show { display: block; }
+  .preview-wrap img { max-width: 320px; width: 100%; border-radius: 10px; border: 1px solid var(--border); display: block; }
+
+  /* ACTION ROW */
+  .action-row {
+    display: flex; align-items: center; gap: 12px;
+    margin-top: 8px; padding-top: 28px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .btn-predict {
+    background: var(--accent); color: #06090f; border: none; border-radius: 8px;
+    padding: 12px 28px; font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: 0.88rem; letter-spacing: 0.04em; cursor: pointer;
+    transition: opacity 0.15s, transform 0.12s, box-shadow 0.15s;
+    box-shadow: 0 3px 16px rgba(74,222,128,0.28);
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  }
+  .btn-predict:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+  .btn-predict svg { width: 14px; height: 14px; flex-shrink: 0; }
+  .btn-predict:not(:disabled):hover { opacity: 0.88; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(74,222,128,0.38); }
+  .btn-predict:not(:disabled):active { transform: translateY(0); }
+  .btn-clear {
+    background: transparent; color: var(--muted);
+    border: 1px solid rgba(255,255,255,0.10); border-radius: 8px;
+    padding: 12px 22px; font-family: 'DM Sans', sans-serif; font-weight: 500;
+    font-size: 0.88rem; cursor: pointer; flex-shrink: 0;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .btn-clear:hover { color: var(--text); border-color: var(--subtle); }
+
+  /* ERROR BAR */
+  .error-bar {
+    display: none; border-radius: 9px; border: 1px solid rgba(248,113,113,0.5);
+    background: rgba(248,113,113,0.07); padding: 14px 20px; margin-bottom: 24px;
+  }
+  .error-bar.show { display: block; }
+  .error-eyebrow { font-size: 0.6rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: #f87171; margin-bottom: 6px; }
+  .error-text { color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
+
+  /* RESULTS */
+  .results { margin-top: 32px; animation: fadeUp 0.35s ease both; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+  .verdict-bar {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--accent-dim); border: 1px solid rgba(74,222,128,0.28);
+    border-radius: 9px; padding: 16px 20px; margin-bottom: 24px;
+  }
+  .verdict-bar.no-detect { background: var(--surface2); border-color: var(--border2); }
+  .verdict-icon { width: 36px; height: 36px; border-radius: 9px; background: rgba(74,222,128,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .verdict-bar.no-detect .verdict-icon { background: var(--surface3); }
+  .verdict-icon svg { width: 17px; height: 17px; color: var(--accent); }
+  .verdict-bar.no-detect .verdict-icon svg { color: var(--muted); }
+  .verdict-label { font-size: 0.6rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .verdict-value { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.15rem; color: var(--accent); text-transform: capitalize; }
+  .verdict-bar.no-detect .verdict-value { color: var(--text); }
+
+  .results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .result-panel { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .result-panel-title { font-size: 0.63rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--subtle); margin-bottom: 14px; }
+  .result-panel img { width: 100%; border-radius: 8px; border: 1px solid var(--border); display: block; }
+
+  .advice-block { margin-bottom: 16px; }
+  .advice-block:last-child { margin-bottom: 0; }
+  .advice-label { font-size: 0.68rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; }
+  .advice-label.what-is  { color: var(--accent); }
+  .advice-label.what-do  { color: var(--success); }
+  .advice-label.what-not { color: var(--error); }
+  .advice-text { font-size: 0.85rem; color: var(--muted); line-height: 1.65; }
+
+  /* RESPONSIVE */
+  @media (max-width: 960px) {
+    .shell { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); padding: 28px 24px; }
+    .form-area { padding: 28px 24px 56px; max-width: 100%; }
+    .results-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="logo">Zanevo<em>.</em></a>
+    <div class="nav-links">
+      <a href="/#models" class="nav-link">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Models
+      </a>
+      <a href="/#methodology" class="nav-link">
+        <svg viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/></svg>
+        Methodology
+      </a>
+      <a href="/" class="nav-link">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home
+      </a>
+    </div>
+  </div>
+</nav>
+
+<div style="max-width:var(--max-w);margin:0 auto;width:100%;display:flex;flex:1;">
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="model-badge"><span class="badge-dot"></span> U-Net Segmentation</div>
+    <h1 class="sidebar-title">Plant Disease<span>Segmentation</span></h1>
+    <p class="sidebar-desc">Identify visible disease regions on a plant leaf photo using a U-Net trained from scratch, pixel by pixel, not just a single sick/healthy label.</p>
+
+    <div class="computed-note">
+      <strong>Trained from scratch</strong>
+      <p>No pretrained backbone. Every encoder/decoder layer was built and trained directly on the PlantSeg dataset.</p>
+    </div>
+
+    <div class="sidebar-signals">
+      <div class="signals-title">What the model does</div>
+      <div class="signal-item"><span class="signal-dot"></span>Segments the exact diseased region, not just a yes/no label</div>
+      <div class="signal-item"><span class="signal-dot"></span>Covers 15 disease classes across 15 plant species</div>
+      <div class="signal-item"><span class="signal-dot"></span>Trained with combined cross-entropy + Dice loss for better region overlap</div>
+      <div class="signal-item"><span class="signal-dot"></span>75% whole-image classification accuracy on held-out validation</div>
+    </div>
+
+    <div class="sidebar-limitation">
+      <div class="limitation-title">Known limitation</div>
+      <p class="limitation-text">Apple scab detection is weaker than other classes since its lesions cover a much smaller share of the leaf, a harder target for segmentation, not a bug.</p>
+    </div>
+  </aside>
+
+  <!-- FORM -->
+  <main class="form-area">
+    <form method="POST" id="plant-form" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+
+      <div class="disclaimer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Upload a clear, well-lit photo of a single affected leaf for best results.
+      </div>
+
+      <div class="sh"><div class="sh-bar"></div><span class="sh-text">Upload Leaf Photo</span></div>
+
+      <label class="dropzone" id="dropzone" for="plant-image-input">
+        <div class="dz-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/><polyline points="7 9 12 4 17 9"/><line x1="12" y1="4" x2="12" y2="16"/></svg>
+        </div>
+        <div class="dz-text">Click to upload, or drag a photo here</div>
+        <div class="dz-hint">JPG or PNG, ideally a single leaf, filling most of the frame</div>
+        <div class="dz-filename" id="dz-filename"></div>
+      </label>
+      <input type="file" id="plant-image-input" name="image" accept="image/*" required>
+
+      <div class="preview-wrap" id="preview-wrap">
+        <div class="sh"><div class="sh-bar"></div><span class="sh-text">Preview</span></div>
+        <img id="preview-img" src="" alt="Uploaded leaf preview">
+      </div>
+
+      <div class="action-row">
+        <button type="submit" class="btn-predict" id="submit-btn" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.2H22l-6 4.6 2.3 7.2L12 16.4l-6.3 4.6 2.3-7.2-6-4.6h7.6z"/></svg>
+          Analyze Leaf
+        </button>
+        <button type="button" class="btn-clear" id="clear-btn">Clear</button>
+      </div>
+    </form>
+
+    {% if error %}
+    <div class="error-bar show">
+      <div class="error-eyebrow">Upload Error</div>
+      <div class="error-text">{{ error }}</div>
+    </div>
+    {% endif %}
+
+    {% if result %}
+    <div class="results">
+      <div class="verdict-bar {% if result == 'No disease detected' %}no-detect{% endif %}">
+        <div class="verdict-icon">
+          {% if result == 'No disease detected' %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          {% else %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          {% endif %}
+        </div>
+        <div>
+          <div class="verdict-label">{% if result == 'No disease detected' %}Result{% else %}Predicted Disease{% endif %}</div>
+          <div class="verdict-value">{{ result }}</div>
+        </div>
+      </div>
+
+      {% if overlay_b64 %}
+      <div class="results-grid">
+        <div class="result-panel">
+          <div class="result-panel-title">Diseased Region Overlay</div>
+          <img src="data:image/png;base64,{{ overlay_b64 }}" alt="Predicted disease region overlay">
+        </div>
+
+        {% if advice %}
+        <div class="result-panel">
+          <div class="result-panel-title">Diagnosis &amp; Advice</div>
+          <div class="advice-block">
+            <div class="advice-label what-is">What it is</div>
+            <div class="advice-text">{{ advice.what_it_is }}</div>
+          </div>
+          <div class="advice-block">
+            <div class="advice-label what-do">What to do</div>
+            <div class="advice-text">{{ advice.what_to_do }}</div>
+          </div>
+          <div class="advice-block">
+            <div class="advice-label what-not">What not to do</div>
+            <div class="advice-text">{{ advice.what_not_to_do }}</div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </main>
+
+</div>
+</div>
+
+<script>
+(function () {
+  const dropzone   = document.getElementById('dropzone');
+  const fileInput  = document.getElementById('plant-image-input');
+  const dzFilename = document.getElementById('dz-filename');
+  const previewWrap = document.getElementById('preview-wrap');
+  const previewImg  = document.getElementById('preview-img');
+  const submitBtn   = document.getElementById('submit-btn');
+  const clearBtn    = document.getElementById('clear-btn');
+  const form        = document.getElementById('plant-form');
+
+  function handleFile(file) {
+    if (!file) return;
+    dropzone.classList.add('has-file');
+    dzFilename.textContent = file.name;
+    submitBtn.disabled = false;
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      previewImg.src = e.target.result;
+      previewWrap.classList.add('show');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  fileInput.addEventListener('change', function () {
+    handleFile(fileInput.files[0]);
+  });
+
+  ['dragover', 'dragenter'].forEach(evt => {
+    dropzone.addEventListener(evt, function (e) {
+      e.preventDefault();
+      dropzone.classList.add('drag-over');
+    });
+  });
+  ['dragleave', 'drop'].forEach(evt => {
+    dropzone.addEventListener(evt, function (e) {
+      e.preventDefault();
+      dropzone.classList.remove('drag-over');
+    });
+  });
+  dropzone.addEventListener('drop', function (e) {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      fileInput.files = e.dataTransfer.files;
+      handleFile(file);
+    }
+  });
+
+  clearBtn.addEventListener('click', function () {
+    form.reset();
+    dropzone.classList.remove('has-file');
+    dzFilename.textContent = '';
+    previewWrap.classList.remove('show');
+    previewImg.src = '';
+    submitBtn.disabled = true;
+  });
+
+  const resultsEl = document.querySelector('.results');
+  if (resultsEl) {
+    setTimeout(function () {
+      resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+  }
+})();
+</script>
+</body>
+</html>
