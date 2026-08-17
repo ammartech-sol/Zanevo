@@ -2,7 +2,6 @@ import joblib
 import json
 from pathlib import Path
 import numpy as np
-import onnxruntime
 
 BASE = Path(__file__).resolve().parent.parent / 'ml_models'
 
@@ -102,12 +101,3 @@ try:
     print("MBTI loaded OK")
 except Exception as e:
     print(f"MBTI FAILED: {e}")
-
-try:
-    plant_disease_session = onnxruntime.InferenceSession(
-        str(BASE / 'plant_disease_unet.onnx')
-    )
-    print("PlantDisease ONNX model loaded OK")
-except Exception as e:
-    plant_disease_session = None
-    print(f"PlantDisease FAILED: {e}")

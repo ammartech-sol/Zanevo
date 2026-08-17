@@ -13,5 +13,4 @@ urlpatterns = [
     path('terms/', views.terms, name='terms'),
     path('ecommerce/', views.segmentation_predict, name='ecommerce'),
     path('mbti/', views.mbti_predict, name='mbti'),
-    path('plant-disease/', views.plant_disease_predict, name='plant_disease'),
 ]
