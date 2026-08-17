@@ -595,7 +595,7 @@
         <div class="hero-right">
           <div class="stat-main">
             <div class="stat-main-label">Models deployed</div>
-            <div class="stat-main-num">8</div>
+            <div class="stat-main-num">9</div>
             <div class="stat-main-sub">Across healthcare, business,<br>real estate &amp; education</div>
           </div>
           <div class="stat-bento">
@@ -615,7 +615,7 @@
                 <span class="stat-mini-lbl">Model<br>Clustering</span>
               </div>
               <div class="stat-mini c-pink-box">
-                <span class="stat-mini-val c-pink">1</span>
+                <span class="stat-mini-val c-pink">2</span>
                 <span class="stat-mini-lbl">Model<br>Neural Net</span>
               </div>
             </div>
@@ -635,7 +635,7 @@
     <section class="models-section" id="models">
       <div class="section-header">
         <span class="section-lbl">All Models</span>
-        <div class="live-chip"><span></span> 8 live</div>
+        <div class="live-chip"><span></span> 9 live</div>
       </div>
 
       <div class="model-grid">
@@ -652,16 +652,16 @@
           <div class="card-cta">Take the quiz</div>
         </a>
 
-        <!-- 2. Ames House Price -->
-        <a href="/ames/" class="model-card c-green">
+        <!-- 9. Plant Disease Segmentation -->
+        <a href="/plant-disease/" class="model-card c-green">
           <div class="card-top">
-            <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
-            <span class="card-metric">R² 0.9315</span>
+            <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 019.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 11 12.62 11 10"/></svg></div>
+            <span class="card-metric">75% acc</span>
           </div>
-          <div class="card-algo">Ridge Regression · Ames Housing</div>
-          <div class="card-title">Ames House Price</div>
-          <div class="card-desc">Predicts residential sale prices from 80+ features. Ridge selected over LightGBM for better out-of-box generalization. MAE of $11,004 on the test set.</div>
-          <div class="card-cta">Run prediction</div>
+          <div class="card-algo">U-Net (from scratch) · Plant Disease Segmentation</div>
+          <div class="card-title">Plant Disease Detection</div>
+          <div class="card-desc">Segments the exact diseased region on a leaf photo and identifies which of 15 diseases it is, not just a sick/healthy label.</div>
+          <div class="card-cta">Analyze leaf</div>
         </a>
 
         <!-- 3. E-Commerce Segmentation -->
@@ -675,6 +675,19 @@
           <div class="card-desc">Segments 83,000 customers into 3 behavioral groups using RFM analysis. K=3 selected via Elbow and Silhouette methods; Frequency dropped after showing zero variance.</div>
           <div class="card-cta">Run segmentation</div>
         </a>
+
+        <!-- 2. Ames House Price -->
+        <a href="/ames/" class="model-card c-green">
+          <div class="card-top">
+            <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+            <span class="card-metric">R² 0.9315</span>
+          </div>
+          <div class="card-algo">Ridge Regression · Ames Housing</div>
+          <div class="card-title">Ames House Price</div>
+          <div class="card-desc">Predicts residential sale prices from 80+ features. Ridge selected over LightGBM for better out-of-box generalization. MAE of $11,004 on the test set.</div>
+          <div class="card-cta">Run prediction</div>
+        </a>
+
         <!-- 4. Census Income -->
         <a href="/census/" class="model-card c-amber">
           <div class="card-top">
