@@ -2,8 +2,14 @@ from django.shortcuts import render
 import pandas as pd
 import numpy as np
 from . import ml_loader as ml
+import gc
+import time
 from .mbti_utils import QUESTIONS, predict_mbti
-
+import io
+import base64
+from PIL import Image
+from django.shortcuts import render
+from .plant_disease_data import IDX_TO_CLASS, DISEASE_ADVICE
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -575,6 +581,29 @@ def preprocess_image(image: Image.Image, size: int = 256):
 
     return image_tensor, original_size
 
+MAX_DIM = 512  # longest side, in pixels, before any processing touches the image
+
+def _load_and_cap_image(uploaded_file, max_dim: int = MAX_DIM) -> Image.Image:
+    """
+    Uses JPEG draft mode to decode directly at a reduced resolution where
+    possible, avoiding ever allocating the full native-resolution array.
+    Falls back to a plain resize for non-JPEG uploads or if draft mode
+    doesn't shrink it enough on its own.
+    """
+    image = Image.open(uploaded_file)
+    try:
+        image.draft('RGB', (max_dim, max_dim))
+    except Exception:
+        pass
+    image = image.convert('RGB')
+
+    w, h = image.size
+    if max(w, h) > max_dim:
+        scale = max_dim / max(w, h)
+        image = image.resize((int(w * scale), int(h * scale)), Image.BILINEAR)
+
+    return image
+
 def looks_like_plant_leaf(image: Image.Image, min_green_fraction: float = 0.12) -> bool:
     img = image.convert('RGB').resize((128, 128))
     arr = np.array(img).astype(np.int16)
@@ -626,9 +655,8 @@ def create_overlay(original_image: Image.Image, pred_mask: np.ndarray, alpha: fl
 
 def _image_to_base64(image: Image.Image) -> str:
     buf = io.BytesIO()
-    image.save(buf, format='PNG')
+    image.save(buf, format='JPEG', quality=70)
     return base64.b64encode(buf.getvalue()).decode('utf-8')
-
 
 def plant_disease_predict(request):
     result = None
@@ -643,12 +671,14 @@ def plant_disease_predict(request):
             })
 
         uploaded = request.FILES['image']
+        t0 = time.time()
         try:
-            original_image = Image.open(uploaded)
+            original_image = _load_and_cap_image(uploaded)
         except Exception:
             return render(request, 'plant_disease.html', {
                 'error': 'Could not read that file as an image.'
             })
+        t1 = time.time()
 
         if not looks_like_plant_leaf(original_image):
             return render(request, 'plant_disease.html', {
@@ -656,12 +686,20 @@ def plant_disease_predict(request):
             })
 
         pred_mask, predicted_disease, pixel_count = predict_mask(original_image, ml.plant_disease_session)
+        t2 = time.time()
 
         result = predicted_disease
         if predicted_disease != "No disease detected":
             advice = DISEASE_ADVICE.get(predicted_disease)
             overlay_img = create_overlay(original_image, pred_mask)
             overlay_b64 = _image_to_base64(overlay_img)
+            del overlay_img
+        t3 = time.time()
+
+        print(f"[plant-disease timing] decode+cap: {t1-t0:.2f}s | inference: {t2-t1:.2f}s | overlay+encode: {t3-t2:.2f}s | total: {t3-t0:.2f}s")
+
+        del original_image, pred_mask
+        gc.collect()
 
     return render(request, 'plant_disease.html', {
         'result': result,

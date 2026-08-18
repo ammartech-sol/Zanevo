@@ -104,8 +104,12 @@ except Exception as e:
     print(f"MBTI FAILED: {e}")
 
 try:
+    _plant_disease_opts = onnxruntime.SessionOptions()
+    _plant_disease_opts.intra_op_num_threads = 1
+    _plant_disease_opts.inter_op_num_threads = 1
     plant_disease_session = onnxruntime.InferenceSession(
-        str(BASE / 'plant_disease_unet_quantized.onnx')
+        str(BASE / 'plant_disease_unet_quantized.onnx'),
+        sess_options=_plant_disease_opts
     )
     print("PlantDisease ONNX model loaded OK")
 except Exception as e:
