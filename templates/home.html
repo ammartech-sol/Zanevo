@@ -567,13 +567,13 @@
         <div class="hero-left">
           <div class="eyebrow">
             <span class="eyebrow-dot"></span>
-            <span>ML & DL Prediction Suite · 8 Models Live</span>
+            <span>ML & DL Prediction Suite · 9 Models Live</span>
           </div>
 
           <h1 class="hero-h1"><span class="accent">Zanevo</span></h1>
           <p class="hero-tagline">Run real predictions. Live.</p>
 
-          <p class="hero-desc">A unified platform for production-trained ML models across healthcare, business, real estate, and education. Enter inputs, get predictions backed by real datasets.</p>
+          <p class="hero-desc">A unified platform for production-trained ML & DL models across healthcare, business, real estate,education, and personality. Enter inputs, get predictions backed by real datasets.</p>
 
           <div class="steps-row">
             <div class="step-item">
@@ -763,50 +763,58 @@
         <p class="method-intro">These aren't just demos. Each model involved a deliberate tradeoff, between precision and recall, between model complexity and generalization, between a good metric and a useful one.</p>
       </div>
       <div class="decisions-grid">
+
         <div class="d-card">
           <div class="d-num">01</div>
+          <div class="d-body">
+            <strong>Dice loss fixed what cross-entropy hid</strong>
+            <p>The U-Net's training loss dropped smoothly and looked healthy on cross-entropy alone — but per-class IoU told a different story: several disease classes sat at or near zero while background pixels carried the average. Switching to combined cross-entropy + Dice loss, which scores region overlap directly rather than averaging pixel by pixel, <em>improved every one of the 15 classes</em>. The strongest jump was Coffee Leaf Rust: <em>0.010 → 0.418</em>.</p>
+          </div>
+        </div>
+        <div class="d-card">
+          <div class="d-num">02</div>
           <div class="d-body">
             <strong>Held-out test accuracy decides trust, not validation alone</strong>
             <p>Validation scores made all four MBTI dimensions look roughly usable. Re-checking against a completely unseen test set told a different story: T/F held up (<em>0.613 vs a 0.541 baseline</em>), but I/E, N/S, and J/P never cleared their own baseline. <em>Only one of four dimensions earned its confidence score.</em></p>
           </div>
         </div>
         <div class="d-card">
-          <div class="d-num">02</div>
+          <div class="d-num">03</div>
           <div class="d-body">
             <strong>Threshold tuning on imbalanced classifiers</strong>
             <p>Churn (0.323), Attrition (0.30), and Census Income (0.4) all use custom thresholds below 0.5. The default threshold optimizes accuracy, the wrong objective when missing a churner costs more than a false alarm. Lowering the threshold shifts the tradeoff toward <em>catching more positives</em>.</p>
           </div>
         </div>
       <div class="d-card">
-        <div class="d-num">03</div>
+        <div class="d-num">04</div>
         <div class="d-body">
           <strong>Ridge over LightGBM for Ames Housing</strong>
           <p>LightGBM showed a <em>6.4-point train/test gap</em> (0.9826 vs 0.9183) without tuning, a clear sign of overfitting. Ridge with L2 regularization handled the 167-feature post-encoding space better out of the box. A well-regularized linear model beat the tree here.</p>
         </div>
       </div>
       <div class="d-card">
-        <div class="d-num">04</div>
+        <div class="d-num">05</div>
         <div class="d-body">
           <strong>Dataset size and interpretability drive algorithm choice</strong>
           <p>Heart Disease uses Logistic Regression because the Cleveland dataset is only <em>303 rows</em> and clinical interpretability matters more than marginal accuracy gains. Attrition uses XGBoost because HR data has complex feature interactions that linear models structurally miss. <em>Algorithm selection followed the data.</em></p>
         </div>
       </div>
       <div class="d-card">
-        <div class="d-num">05</div>
+        <div class="d-num">06</div>
         <div class="d-body">
           <strong>Feature engineering validated by importance scores</strong>
           <p>Six features were engineered for the Attrition model including <em>IsOverworked</em>, combining overtime status with poor work-life balance as a stress signal. It ranked in the <em>top 5 most important features</em> out of 35, confirming the engineering decision rather than just adding noise.</p>
         </div>
       </div>
       <div class="d-card">
-        <div class="d-num">06</div>
+        <div class="d-num">07</div>
         <div class="d-body">
           <strong>F1 over accuracy on imbalanced datasets</strong>
           <p>The UCI Adult dataset is 76/24 class-imbalanced. Predicting everyone as ≤$50K hits <em>76% accuracy while being completely useless</em>. The IBM HR dataset is 84/16. In both cases F1 and recall are the meaningful metrics, accuracy is a number that hides a broken model.</p>
         </div>
       </div>
       <div class="d-card">
-        <div class="d-num">07</div>
+        <div class="d-num">08</div>
         <div class="d-body">
           <strong>Dropping zero-variance features before clustering</strong>
           <p>In the Olist segmentation project, Frequency showed that over <em>90% of customers had placed exactly one order</em>. After log transform and outlier removal it had a standard deviation of 0.0, meaning it could not separate any customers from each other. A feature that adds no signal only distorts centroid positions. <em>It was dropped.</em></p>
@@ -828,7 +836,7 @@
       <!-- Col 1: brand -->
       <div class="f-brand">
         <a href="/" class="f-logo">Zanevo</a>
-        <span class="f-tagline">AI Engineer · Django · Scikit-learn · XGBoost · NumPy</span>
+        <span class="f-tagline">AI Engineer · Django · Scikit-learn · XGBoost · NumPy · PyTorch · ONNX</span>
       </div>
 
       

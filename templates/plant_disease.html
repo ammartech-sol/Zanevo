@@ -95,8 +95,8 @@
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
 
   .sidebar-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.55rem; line-height: 1.1; letter-spacing: -0.02em; color: var(--text); margin-bottom: 12px; }
-  .sidebar-title span { color: var(--accent); display: block; }
-  .sidebar-desc { font-size: 0.875rem; color: var(--muted); line-height: 1.72; margin-bottom: 20px; }
+  .sidebar-title span { color: var(--accent); display: block; font-size: 1.35rem; }
+  .sidebar-desc { font-size: 0.845rem; color: var(--muted); line-height: 1.72; margin-bottom: 20px; }
 
   .computed-note { background: var(--accent-dim); border: 1px solid rgba(74,222,128,0.18); border-radius: 8px; padding: 12px 14px; margin-bottom: 24px; }
   .computed-note strong { display: block; font-size: 0.62rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
@@ -127,27 +127,62 @@
   .dropzone {
     border: 1.5px dashed var(--border2); border-radius: 12px;
     background: var(--surface2);
-    padding: 40px 24px; text-align: center;
-    cursor: pointer; transition: border-color 0.15s, background 0.15s;
-    margin-bottom: 24px;
+    min-height: 220px; text-align: center;
+    cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    margin-bottom: 18px; overflow: hidden; position: relative;
+    display: flex; align-items: center; justify-content: center;
   }
-  .dropzone:hover, .dropzone.drag-over { border-color: var(--accent); background: #101c30; }
-  .dropzone.has-file { border-style: solid; border-color: rgba(74,222,128,0.35); }
+  .dropzone:hover, .dropzone.drag-over { border-color: var(--accent); background: #0f1e2e; }
+  .dropzone.has-file { border-style: solid; border-color: rgba(74,222,128,0.4); padding: 0; cursor: default; }
+  .dropzone.has-file:hover { background: var(--surface2); border-color: rgba(74,222,128,0.4); }
+
+  /* empty state content */
+  .dz-empty { display: flex; flex-direction: column; align-items: center; padding: 40px 24px; width: 100%; }
+  .dropzone.has-file .dz-empty { display: none; }
   .dz-icon { width: 34px; height: 34px; color: var(--accent); margin: 0 auto 14px; }
   .dz-icon svg { width: 100%; height: 100%; }
   .dz-text { font-size: 0.92rem; color: var(--text); font-weight: 500; margin-bottom: 6px; }
   .dz-hint { font-size: 0.78rem; color: var(--subtle); }
-  .dz-filename { font-size: 0.85rem; color: var(--accent); font-weight: 500; margin-top: 10px; word-break: break-all; }
+
+  /* preview state — fills the dropzone */
+  .dz-preview { display: none; width: 100%; height: 100%; position: relative; }
+  .dropzone.has-file .dz-preview { display: block; }
+  .dz-preview img {
+    width: 100%; height: 280px; object-fit: cover; display: block;
+    border-radius: 10px;
+  }
+  .dz-preview-label {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(6,9,15,0.85));
+    padding: 28px 16px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-radius: 0 0 10px 10px;
+  }
+  .dz-preview-name { font-size: 0.78rem; color: var(--text); font-weight: 500; word-break: break-all; }
+  .dz-change-btn {
+    font-size: 0.7rem; color: var(--accent); font-weight: 600; font-family: 'Syne', sans-serif;
+    letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
+    background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.2);
+    padding: 4px 10px; border-radius: 4px; flex-shrink: 0; margin-left: 12px;
+    transition: background 0.15s;
+  }
+  .dz-change-btn:hover { background: rgba(74,222,128,0.2); }
+
   #plant-image-input { display: none; }
 
-  .preview-wrap { display: none; margin-bottom: 24px; }
-  .preview-wrap.show { display: block; }
-  .preview-wrap img { max-width: 320px; width: 100%; border-radius: 10px; border: 1px solid var(--border); display: block; }
+  /* PROCESSING NOTE */
+  .processing-note {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.75rem; color: var(--subtle); margin-bottom: 24px;
+    padding: 8px 12px; border-radius: 6px; background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .processing-note svg { width: 12px; height: 12px; flex-shrink: 0; color: var(--subtle); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
   /* ACTION ROW */
   .action-row {
     display: flex; align-items: center; gap: 12px;
-    margin-top: 8px; padding-top: 28px;
+    margin-top: 8px; padding-top: 24px;
     border-top: 1px solid var(--border);
     flex-wrap: wrap;
   }
@@ -159,23 +194,80 @@
     box-shadow: 0 3px 16px rgba(74,222,128,0.28);
     display: flex; align-items: center; gap: 8px; flex-shrink: 0;
   }
-  .btn-predict:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
   .btn-predict svg { width: 14px; height: 14px; flex-shrink: 0; }
   .btn-predict:not(:disabled):hover { opacity: 0.88; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(74,222,128,0.38); }
   .btn-predict:not(:disabled):active { transform: translateY(0); }
   .btn-clear {
     background: transparent; color: var(--muted);
-    border: 1px solid rgba(255,255,255,0.10); border-radius: 8px;
-    padding: 12px 22px; font-family: 'DM Sans', sans-serif; font-weight: 500;
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 22px; font-family: 'Space Grotesk', sans-serif; font-weight: 500;
     font-size: 0.88rem; cursor: pointer; flex-shrink: 0;
-    transition: color 0.15s, border-color 0.15s;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
   }
-  .btn-clear:hover { color: var(--text); border-color: var(--subtle); }
+  .btn-clear:hover { color: var(--text); border-color: var(--border2); background: var(--surface); }
+
+  /* LOADING OVERLAY */
+  .loading-overlay {
+    display: none; position: fixed; inset: 0; z-index: 999;
+    background: rgba(6,9,15,0.82); backdrop-filter: blur(8px);
+    align-items: center; justify-content: center;
+  }
+  .loading-overlay.active { display: flex; }
+  .loading-card {
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: 16px; padding: 36px 44px; text-align: center;
+    max-width: 380px; width: 90%;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  }
+  /* animated leaf icon */
+  .loading-leaf {
+    width: 52px; height: 52px; margin: 0 auto 20px;
+    background: var(--accent-dim); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    animation: pulse-ring 2s ease-in-out infinite;
+  }
+  .loading-leaf svg { width: 24px; height: 24px; color: var(--accent); animation: leaf-spin 3s ease-in-out infinite; }
+  @keyframes pulse-ring {
+    0%,100% { box-shadow: 0 0 0 0 rgba(74,222,128,0.3); }
+    50%      { box-shadow: 0 0 0 12px rgba(74,222,128,0); }
+  }
+  @keyframes leaf-spin {
+    0%,100% { transform: rotate(-8deg) scale(1); }
+    50%     { transform: rotate(8deg) scale(1.1); }
+  }
+  .loading-title {
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem;
+    color: var(--text); margin-bottom: 6px; letter-spacing: -0.01em;
+  }
+  .loading-stage {
+    font-size: 0.82rem; color: var(--accent); font-weight: 500; margin-bottom: 24px;
+    min-height: 1.2em; transition: opacity 0.3s;
+  }
+  /* segmented progress bar */
+  .loading-segs {
+    display: flex; gap: 5px; margin-bottom: 16px;
+  }
+  .loading-seg {
+    flex: 1; height: 4px; border-radius: 2px; background: var(--border2);
+    overflow: hidden; position: relative;
+  }
+  .loading-seg-fill {
+    height: 100%; width: 0%; background: var(--accent); border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+  .loading-seg.done .loading-seg-fill { width: 100%; }
+  .loading-seg.active .loading-seg-fill {
+    width: 60%; animation: seg-pulse 1.2s ease-in-out infinite alternate;
+  }
+  @keyframes seg-pulse { from{ width: 40% } to{ width: 80% } }
+  .loading-eta {
+    font-size: 0.73rem; color: var(--subtle);
+  }
 
   /* ERROR BAR */
   .error-bar {
     display: none; border-radius: 9px; border: 1px solid rgba(248,113,113,0.5);
-    background: rgba(248,113,113,0.07); padding: 14px 20px; margin-bottom: 24px;
+    background: rgba(248,113,113,0.07); padding: 14px 20px; margin-bottom: 20px;
   }
   .error-bar.show { display: block; }
   .error-eyebrow { font-size: 0.6rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: #f87171; margin-bottom: 6px; }
@@ -193,7 +285,7 @@
   .verdict-bar.no-detect { background: var(--surface2); border-color: var(--border2); }
   .verdict-icon { width: 36px; height: 36px; border-radius: 9px; background: rgba(74,222,128,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .verdict-bar.no-detect .verdict-icon { background: var(--surface3); }
-  .verdict-icon svg { width: 17px; height: 17px; color: var(--accent); }
+  .verdict-icon svg { width: 17px; height: 17px; color: var(--accent); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .verdict-bar.no-detect .verdict-icon svg { color: var(--muted); }
   .verdict-label { font-size: 0.6rem; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
   .verdict-value { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.15rem; color: var(--accent); text-transform: capitalize; }
@@ -249,25 +341,48 @@
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="model-badge"><span class="badge-dot"></span> U-Net Segmentation</div>
-    <h1 class="sidebar-title">Plant Disease<span>Segmentation</span></h1>
+    <div class="sidebar-title">
+      Plant Disease
+      <span>Segmentation</span>
+    </div>
     <p class="sidebar-desc">Identify visible disease regions on a plant leaf photo using a U-Net trained from scratch, pixel by pixel, not just a single sick/healthy label.</p>
 
     <div class="computed-note">
       <strong>Trained from scratch</strong>
-      <p>No pretrained backbone. Every encoder/decoder layer was built and trained directly on the PlantSeg dataset.</p>
+      <p>No pretrained backbone. 4-stage encoder, bottleneck, 4-stage decoder with skip connections. Every layer built directly in PyTorch on the PlantSeg dataset.</p>
     </div>
 
     <div class="sidebar-signals">
-      <div class="signals-title">What the model does</div>
-      <div class="signal-item"><span class="signal-dot"></span>Segments the exact diseased region, not just a yes/no label</div>
-      <div class="signal-item"><span class="signal-dot"></span>Covers 15 disease classes across 15 plant species</div>
-      <div class="signal-item"><span class="signal-dot"></span>Trained with combined cross-entropy + Dice loss for better region overlap</div>
-      <div class="signal-item"><span class="signal-dot"></span>75% whole-image classification accuracy on held-out validation</div>
+      <div class="signals-title">Model stats</div>
+      <div class="signal-item">
+        <span class="signal-dot"></span>
+        <span><strong style="color:var(--text);font-weight:600;">75%</strong> whole-image classification accuracy on held-out validation</span>
+      </div>
+      <div class="signal-item">
+        <span class="signal-dot"></span>
+        <span><strong style="color:var(--text);font-weight:600;">11,000+</strong> images from PlantSeg (Kaggle / Zenodo)</span>
+      </div>
+      <div class="signal-item">
+        <span class="signal-dot"></span>
+        <span><strong style="color:var(--text);font-weight:600;">15 classes</strong> across 15 plant species, chosen by sample size and visual diversity</span>
+      </div>
+      <div class="signal-item">
+        <span class="signal-dot"></span>
+        <span>Input fixed at <strong style="color:var(--text);font-weight:600;">256×256</strong>, images resized before inference</span>
+      </div>
+    </div>
+
+    <div class="sidebar-signals" style="margin-top: 20px;">
+      <div class="signals-title">What makes it different</div>
+      <div class="signal-item"><span class="signal-dot"></span>Pixel-level mask output, not a yes/no label</div>
+      <div class="signal-item"><span class="signal-dot"></span>Combined cross-entropy + Dice loss; every class improved after the switch</div>
+      <div class="signal-item"><span class="signal-dot"></span>Mask bug caught by raw pixel inspection, not symptoms. Values were 4-114, not 0/255</div>
+      <div class="signal-item"><span class="signal-dot"></span>Exported to ONNX and verified against PyTorch output before deployment</div>
     </div>
 
     <div class="sidebar-limitation">
       <div class="limitation-title">Known limitation</div>
-      <p class="limitation-text">Apple scab detection is weaker than other classes since its lesions cover a much smaller share of the leaf, a harder target for segmentation, not a bug.</p>
+      <p class="limitation-text">Apple scab lesions cover a median of ~6% of the image vs 40%+ for the strongest class. Small, sparse targets are harder for a fixed-architecture segmentation model. Explainable, not a bug.</p>
     </div>
   </aside>
 
@@ -284,31 +399,46 @@
       <div class="sh"><div class="sh-bar"></div><span class="sh-text">Upload Leaf Photo</span></div>
 
       <label class="dropzone" id="dropzone" for="plant-image-input">
-        <div class="dz-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/><polyline points="7 9 12 4 17 9"/><line x1="12" y1="4" x2="12" y2="16"/></svg>
+        <!-- empty state -->
+        <div class="dz-empty">
+          <div class="dz-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/><polyline points="7 9 12 4 17 9"/><line x1="12" y1="4" x2="12" y2="16"/></svg>
+          </div>
+          <div class="dz-text">Click to upload, or drag a photo here</div>
+          <div class="dz-hint">JPG or PNG, ideally a single leaf, filling most of the frame</div>
         </div>
-        <div class="dz-text">Click to upload, or drag a photo here</div>
-        <div class="dz-hint">JPG or PNG, ideally a single leaf, filling most of the frame</div>
-        <div class="dz-filename" id="dz-filename"></div>
+        <!-- preview state (shown after file pick) -->
+        <div class="dz-preview">
+          <img id="preview-img" src="" alt="Uploaded leaf preview">
+          <div class="dz-preview-label">
+            <span class="dz-preview-name" id="dz-filename"></span>
+            <span class="dz-change-btn" id="dz-change-btn">Change</span>
+          </div>
+        </div>
       </label>
       <input type="file" id="plant-image-input" name="image" accept="image/*" required>
 
-      <div class="preview-wrap" id="preview-wrap">
-        <div class="sh"><div class="sh-bar"></div><span class="sh-text">Preview</span></div>
-        <img id="preview-img" src="" alt="Uploaded leaf preview">
+      <div class="processing-note">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Analysis takes 8-12 seconds. The model runs segmentation pixel by pixel across the full image.
       </div>
 
       <div class="action-row">
-        <button type="submit" class="btn-predict" id="submit-btn" disabled>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.2H22l-6 4.6 2.3 7.2L12 16.4l-6.3 4.6 2.3-7.2-6-4.6h7.6z"/></svg>
+        <button type="submit" class="btn-predict" id="submit-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
           Analyze Leaf
         </button>
         <button type="button" class="btn-clear" id="clear-btn">Clear</button>
       </div>
+
+      <div class="error-bar" id="no-file-err" style="margin-top: 16px;">
+        <div class="error-eyebrow">No Image Selected</div>
+        <div class="error-text">Please upload a leaf photo before running the analysis.</div>
+      </div>
     </form>
 
     {% if error %}
-    <div class="error-bar show">
+    <div class="error-bar show" style="margin-top: 20px;">
       <div class="error-eyebrow">Upload Error</div>
       <div class="error-text">{{ error }}</div>
     </div>
@@ -319,7 +449,7 @@
       <div class="verdict-bar {% if result == 'No disease detected' %}no-detect{% endif %}">
         <div class="verdict-icon">
           {% if result == 'No disease detected' %}
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
           {% else %}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           {% endif %}
@@ -363,39 +493,73 @@
 </div>
 </div>
 
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-card">
+    <div class="loading-leaf">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/>
+        <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+      </svg>
+    </div>
+    <div class="loading-title">Analyzing your leaf</div>
+    <div class="loading-stage" id="loading-stage">Preparing image...</div>
+    <div class="loading-segs">
+      <div class="loading-seg" id="seg-0"><div class="loading-seg-fill"></div></div>
+      <div class="loading-seg" id="seg-1"><div class="loading-seg-fill"></div></div>
+      <div class="loading-seg" id="seg-2"><div class="loading-seg-fill"></div></div>
+      <div class="loading-seg" id="seg-3"><div class="loading-seg-fill"></div></div>
+      <div class="loading-seg" id="seg-4"><div class="loading-seg-fill"></div></div>
+    </div>
+    <div class="loading-eta" id="loading-eta">This usually takes 8-12 seconds</div>
+  </div>
+</div>
+
 <script>
 (function () {
-  const dropzone   = document.getElementById('dropzone');
-  const fileInput  = document.getElementById('plant-image-input');
-  const dzFilename = document.getElementById('dz-filename');
-  const previewWrap = document.getElementById('preview-wrap');
+  const dropzone    = document.getElementById('dropzone');
+  const fileInput   = document.getElementById('plant-image-input');
+  const dzFilename  = document.getElementById('dz-filename');
   const previewImg  = document.getElementById('preview-img');
   const submitBtn   = document.getElementById('submit-btn');
   const clearBtn    = document.getElementById('clear-btn');
+  const dzChangeBtn = document.getElementById('dz-change-btn');
   const form        = document.getElementById('plant-form');
+  const overlay     = document.getElementById('loading-overlay');
+  const stageEl     = document.getElementById('loading-stage');
+  const etaEl       = document.getElementById('loading-eta');
+  const noFileErr   = document.getElementById('no-file-err');
 
+  // --- FILE HANDLING ---
   function handleFile(file) {
     if (!file) return;
-    dropzone.classList.add('has-file');
     dzFilename.textContent = file.name;
-    submitBtn.disabled = false;
 
     const reader = new FileReader();
     reader.onload = function (e) {
       previewImg.src = e.target.result;
-      previewWrap.classList.add('show');
+      dropzone.classList.add('has-file');
     };
     reader.readAsDataURL(file);
   }
 
   fileInput.addEventListener('change', function () {
     handleFile(fileInput.files[0]);
+    noFileErr.classList.remove('show');
   });
 
+  // "Change" button inside preview
+  dzChangeBtn.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    fileInput.click();
+  });
+
+  // Drag and drop
   ['dragover', 'dragenter'].forEach(evt => {
     dropzone.addEventListener(evt, function (e) {
       e.preventDefault();
-      dropzone.classList.add('drag-over');
+      if (!dropzone.classList.contains('has-file')) dropzone.classList.add('drag-over');
     });
   });
   ['dragleave', 'drop'].forEach(evt => {
@@ -408,20 +572,75 @@
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (file) {
-      fileInput.files = e.dataTransfer.files;
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      fileInput.files = dt.files;
       handleFile(file);
     }
   });
 
+  // Clear
   clearBtn.addEventListener('click', function () {
     form.reset();
     dropzone.classList.remove('has-file');
     dzFilename.textContent = '';
-    previewWrap.classList.remove('show');
     previewImg.src = '';
-    submitBtn.disabled = true;
+    noFileErr.classList.remove('show');
   });
 
+  // --- LOADING OVERLAY ---
+  const STAGES = [
+    { label: 'Preprocessing image...',          seg: 0, duration: 1800 },
+    { label: 'Running encoder pass...',          seg: 1, duration: 2400 },
+    { label: 'Computing bottleneck features...', seg: 2, duration: 2200 },
+    { label: 'Decoding segmentation mask...',    seg: 3, duration: 2000 },
+    { label: 'Classifying disease region...',    seg: 4, duration: 1800 },
+  ];
+
+  function activateSeg(idx, state) {
+    const seg = document.getElementById('seg-' + idx);
+    if (!seg) return;
+    seg.classList.remove('active', 'done');
+    if (state) seg.classList.add(state);
+  }
+
+  function runLoadingAnimation() {
+    let elapsed = 0;
+    let stageIdx = 0;
+
+    function advanceStage() {
+      if (stageIdx >= STAGES.length) return;
+      const s = STAGES[stageIdx];
+      stageEl.textContent = s.label;
+      activateSeg(s.seg, 'active');
+
+      setTimeout(function () {
+        activateSeg(s.seg, 'done');
+        stageIdx++;
+        elapsed += s.duration;
+        const remaining = Math.max(0, Math.round((10200 - elapsed) / 1000));
+        etaEl.textContent = remaining > 1
+          ? 'About ' + remaining + ' seconds remaining'
+          : 'Almost done...';
+        advanceStage();
+      }, s.duration);
+    }
+
+    advanceStage();
+  }
+
+  form.addEventListener('submit', function (e) {
+    if (!fileInput.files || !fileInput.files[0]) {
+      e.preventDefault();
+      noFileErr.classList.add('show');
+      return;
+    }
+    noFileErr.classList.remove('show');
+    overlay.classList.add('active');
+    runLoadingAnimation();
+  });
+
+  // --- AUTO SCROLL TO RESULTS ---
   const resultsEl = document.querySelector('.results');
   if (resultsEl) {
     setTimeout(function () {
